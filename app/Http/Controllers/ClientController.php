@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Storage;
 
 class ClientController extends Controller {
@@ -71,7 +72,7 @@ class ClientController extends Controller {
         }
         $profile_image_filename = 'default-profile.jpg';
         if ($request->hasFile('profile_image') && $request->file('profile_image')->isValid()) {
-            $filename = str_random(7). '-profile.' . str_replace('jpeg', 'jpg', $request->file('profile_image')->guessExtension());
+            $filename = Str::random(7) . '-profile.' . str_replace('jpeg', 'jpg', $request->file('profile_image')->guessExtension());
             try{
                 $request->file('profile_image')->move(storage_path('app/images/users/'), $filename);
                 $profile_image_filename = $filename;
@@ -112,10 +113,9 @@ class ClientController extends Controller {
         }
 
         // Dispatch job to send welcome email
-        $token = hash_hmac('sha256', str_random(40), config('app.key'));
+        $token = hash_hmac('sha256', Str::random(40), config('app.key'));
         DB::table(config('auth.password.table'))->insert(['email' => $client->email, 'token' => $token, 'created_at' => new Carbon]);
-        $job = new SendWelcomeEmail($token, $client);
-        $this->dispatch($job->onQueue('emails')->delay(10));
+        dispatch((new SendWelcomeEmail($token, $client))->onQueue('emails')->delay(10));
 
         return redirect()->back()->with('success', trans('clients.message.success.added'));
     }
@@ -154,7 +154,7 @@ class ClientController extends Controller {
         ));
 
         if ($request->hasFile('profile_image') && $request->file('profile_image')->isValid()) {
-            $profile_image_filename = str_random(7). '-profile.' . str_replace('jpeg', 'jpg', $request->file('profile_image')->guessExtension());
+            $profile_image_filename = Str::random(7) . '-profile.' . str_replace('jpeg', 'jpg', $request->file('profile_image')->guessExtension());
             try{
                 $request->file('profile_image')->move(storage_path('app/images/users/'), $profile_image_filename);
                 $profile_image_storage_path = 'images/users/' . $client->profile_image_filename;

@@ -15,6 +15,7 @@ use Closure;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 use DB;
 
 class PolicyController extends Controller {
@@ -114,7 +115,7 @@ class PolicyController extends Controller {
             $policy = new Policy($request->only(array('beneficiaries', 'expiry', 'payer', 'renewal', 'type','policy_term','payment_term','policy_no','premium_chq_amount','premium_chq_date','premium_chq_no','branch_manager','branch_assist','ecs_mandate','bank_name','pin','bank_branch','ack_date','ack_number','application_no','policy_date','ldob','lmnum','lemail','ndob','nmnum','nemail','deposit_name','premium_amount','point_login','sum_assured','renewal_date')));
             $policy->premium = $request->premium[$owner];
             $policy->special_remarks = str_replace(["\n", "\r\n"], '<br/>', $request->special_remarks);
-            $policy->ref_no = strtoupper(str_random(8));
+            $policy->ref_no = strtoupper(Str::random(8));
             $policy->renewal_date = $request->renewal;
             $policy->client()->associate($client);
             $policy->product()->associate($product);
@@ -285,7 +286,10 @@ class PolicyController extends Controller {
         switch($user->role) {
             case 'super':
                 // Eager load all relationships to avoid N+1 queries
-                $view_data['policies'] = $user->company->policies()
+                // Query directly from Policy to avoid duplicate columns from hasManyThrough + withSum
+                $view_data['policies'] = Policy::whereHas('product', function($query) use ($user) {
+                        $query->where('company_id', $user->company->id);
+                    })
                     ->with(['branch', 'client', 'product']) // Eager load relationships
                     ->withSum('payments', 'amount') // Calculate sum in database
                     ->insuraFilter($filters)

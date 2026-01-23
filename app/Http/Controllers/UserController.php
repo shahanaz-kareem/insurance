@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Storage;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
@@ -50,7 +51,7 @@ class UserController extends Controller {
         ));
 
         if ($request->hasFile('profile_image') && $request->file('profile_image')->isValid()) {
-            $profile_image_filename = str_random(7). '-profile.' . str_replace('jpeg', 'jpg', $request->file('profile_image')->guessExtension());
+            $profile_image_filename = Str::random(7) . '-profile.' . str_replace('jpeg', 'jpg', $request->file('profile_image')->guessExtension());
             try{
                 $request->file('profile_image')->move(storage_path('app/images/users/'), $profile_image_filename);
                 $profile_image_storage_path = 'images/users/' . $user->profile_image_filename;

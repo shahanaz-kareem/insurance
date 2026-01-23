@@ -76,8 +76,19 @@ class ProductController extends Controller {
         $view_data = array();
         if($user->role === 'super') {
             $view_data['companies'] = Company::all();
+            $view_data['companies1'] = Company::all(); // Alias for view compatibility
             $view_data['products'] = Product::paginate(15);
             $view_data['companies']->transform(function($company) {
+                $company->product_categories = collect(explode(',', str_replace(', ', ',', $company->product_categories)))->reject(function($c) {
+                    return empty($c);
+                });
+                $company->product_sub_categories = collect(explode(',', str_replace(', ', ',', $company->product_sub_categories)))->reject(function($sc) {
+                    return empty($sc);
+                });
+                return $company;
+            });
+            // Apply same transformation to companies1
+            $view_data['companies1']->transform(function($company) {
                 $company->product_categories = collect(explode(',', str_replace(', ', ',', $company->product_categories)))->reject(function($c) {
                     return empty($c);
                 });

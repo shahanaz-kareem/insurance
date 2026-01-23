@@ -71,6 +71,44 @@ class CompanyController extends Controller {
     }
 
     /**
+     * Add a new company
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function add(Request $request) {
+        $this->validate($request, array(
+            'address'                   => 'max:256|string|nullable',
+            'comapanyname'              => 'max:64|min:3|required|string', // Note: form has typo "comapanyname"
+            'email'                     => 'email|nullable',
+            'phone'                     => 'max:32|nullable',
+            'product_categories'        => 'string|nullable',
+            'product_sub_categories'    => 'string|nullable',
+            'status'                    => 'integer|nullable'
+        ));
+
+        // Get default currency code from config
+        $default_currency = config('insura.currencies.default', 'USD');
+        
+        // Create company with fillable fields
+        $company = Company::create(array(
+            'address'                   => !empty($request->address) ? $request->address : null,
+            'currency_code'             => $default_currency, // Use default currency for new company
+            'email'                     => !empty($request->email) ? $request->email : null,
+            'name'                      => $request->comapanyname, // Handle typo in form field name
+            'custom_fields_metadata'    => '[]' // Initialize with empty JSON array
+        ));
+        
+        // Set fields that are not in fillable (set directly on model)
+        $company->phone                     = !empty($request->phone) ? $request->phone : null;
+        $company->product_categories        = !empty($request->product_categories) ? $request->product_categories : null;
+        $company->product_sub_categories    = !empty($request->product_sub_categories) ? $request->product_sub_categories : null;
+        $company->save();
+
+        return redirect()->back()->with('success', trans('companies.message.success.added', ['name' => $company->name]));
+    }
+
+    /**
      * Delete a company
      *
      * @param  \App\Models\Company  $company
@@ -79,6 +117,42 @@ class CompanyController extends Controller {
     public function delete(Company $company) {
         $company->delete();
         return redirect()->back()->with('info', trans('companies.message.info.delete'));
+    }
+
+    /**
+     * Edit a company (from companies list page)
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function editcompanies(Request $request) {
+        $this->validate($request, array(
+            'address'                   => 'max:256|string|nullable',
+            'comapanyid'                => 'required|integer|exists:companies,id', // Note: form has typo "comapanyid"
+            'comapanyname'              => 'max:64|min:3|required|string', // Note: form has typo "comapanyname"
+            'email'                     => 'email|nullable',
+            'phone'                     => 'max:32|nullable',
+            'product_categories'        => 'string|nullable',
+            'product_sub_categories'    => 'string|nullable',
+            'status'                    => 'integer|nullable'
+        ));
+
+        try {
+            $company = Company::findOrFail($request->comapanyid);
+        } catch (ModelNotFoundException $e) {
+            return redirect()->back()->withErrors(['Company not found'])->withInput();
+        }
+
+        // Update company fields
+        $company->address                   = !empty($request->address) ? $request->address : null;
+        $company->email                     = !empty($request->email) ? $request->email : null;
+        $company->name                      = $request->comapanyname; // Handle typo in form field name
+        $company->phone                     = !empty($request->phone) ? $request->phone : null;
+        $company->product_categories        = !empty($request->product_categories) ? $request->product_categories : null;
+        $company->product_sub_categories    = !empty($request->product_sub_categories) ? $request->product_sub_categories : null;
+        $company->save();
+
+        return redirect()->back()->with('success', trans('companies.message.success.edited', ['name' => $company->name]));
     }
 
     /**

@@ -15,6 +15,7 @@ use Closure;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 use DB;
 
 class PolicyController1 extends Controller {
@@ -111,7 +112,7 @@ class PolicyController1 extends Controller {
             $policy = new Policy($request->only(array('beneficiaries', 'expiry', 'payer', 'renewal', 'type','policy_term','payment_term','policy_no','premium_chq_amount','premium_chq_date','premium_chq_no','branch_manager','branch_assist','ecs_mandate','bank_name','pin','bank_branch','ack_date','ack_number','application_no','policy_date','ldob','lmnum','lemail','ndob','nmnum','nemail','deposit_name','premium_amount')));
             $policy->premium = $request->premium[$owner];
             $policy->special_remarks = str_replace(["\n", "\r\n"], '<br/>', $request->special_remarks);
-            $policy->ref_no = strtoupper(str_random(8));
+            $policy->ref_no = strtoupper(Str::random(8));
             $policy->client()->associate($client);
             $policy->product()->associate($product);
             $policy->branch()->associate($branch);

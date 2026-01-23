@@ -4,14 +4,13 @@ namespace App\Jobs;
 
 use App\Jobs\Job;
 use App\Models\User;
-use Illuminate\Contracts\Bus\SelfHandling;
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Mail;
 
-class SendWelcomeEmail extends Job implements SelfHandling, ShouldQueue {
+class SendWelcomeEmail extends Job implements ShouldQueue {
     use InteractsWithQueue, SerializesModels;
 
     /**

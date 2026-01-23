@@ -7,6 +7,7 @@ use App\Models\Company;
 use Artisan;
 use Cache;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Storage;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
@@ -203,7 +204,7 @@ class SetupController extends Controller {
         ));
         $seed_data['profile_image_filename'] = 'default-profile.jpg';
         if($request->hasFile('profile_image') && $request->file('profile_image')->isValid()) {
-            $profile_image_filename = str_random(7). '-profile.' . str_replace('jpeg', 'jpg', $request->file('profile_image')->guessExtension());
+            $profile_image_filename = Str::random(7) . '-profile.' . str_replace('jpeg', 'jpg', $request->file('profile_image')->guessExtension());
             try{
                 $request->file('profile_image')->move(storage_path('app/images/users/'), $profile_image_filename);
                 $seed_data['profile_image_filename'] = $profile_image_filename;

@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Storage;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
@@ -43,29 +44,39 @@ class StaffController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function add(Request $request) {
+    
         $this->validate($request, [
-            'address'           => 'max:256|string',
-            'birthday'          => 'date',
+            'address'           => 'max:256|string|nullable',
+            'age'                => 'integer|nullable',
+            'birthday'           => 'date|nullable',
+            'branch_id'          => 'integer|nullable',
             'commission_rate'   => 'numeric|required',
             'company_id'        => 'integer|sometimes',
+            'doj'                => 'date|nullable',
             'email'             => "email|required|unique:users",
             'first_name'        => 'max:32|min:3|string|required',
-            'last_name'         => 'max:32|min:3|string',
-            'phone'             => 'max:16|string',
-            'profile_image'     => 'image'
+            'last_name'         => 'max:32|min:3|string|nullable',
+            'phone'             => 'max:16|string|nullable',
+            'profile_image'     => 'image|nullable',
+            'staff_code'        => 'string|nullable',
+            'staff_role'        => 'string|nullable'
         ]);
+
+        
         $user = $request->user();
         $company = null;
+       
+
         try {
             $company = Company::findOrFail($request->company_id);
         }catch(ModelNotFoundException $e) {
             $company = $user->company;
         }
-        $password = bcrypt(str_random('8'));
+        $password = bcrypt(Str::random(8));
 
         $profile_image_filename = 'default-profile.jpg';
         if ($request->hasFile('profile_image') && $request->file('profile_image')->isValid()) {
-            $profile_image_filename = str_random(7). '-profile.' . str_replace('jpeg', 'jpg', $request->file('profile_image')->guessExtension());
+            $profile_image_filename = Str::random(7) . '-profile.' . str_replace('jpeg', 'jpg', $request->file('profile_image')->guessExtension());
             try{
                 $request->file('profile_image')->move(storage_path('app/images/users/'), $profile_image_filename);
             }catch(FileException $e) {
@@ -77,26 +88,46 @@ class StaffController extends Controller {
             }
         }
 
-        $staff = $company->users()->create(array(
-            'address'                   => $request->address ?: null,
-            'birthday'                  => $request->birthday ?: null,
-            'commission_rate'           => $request->commission_rate,
-            'email'                     => $request->email,
-            'first_name'                => $request->first_name,
-            'last_name'                 => $request->last_name ?: null,
-            'locale'                    => $user->locale,
-            'phone'                     => $request->phone ?: null,
-            'profile_image_filename'    => $profile_image_filename
-        ));
-        $staff->password = 'InsuraPasswordsAreLongButNeedToBeSetByInvitedUsersSuchAsThis';
-        $staff->role = 'staff';
-        $staff->save();
+        // Handle date conversion for birthday (format: d-m-Y to Y-m-d)
+        $birthday = !empty($request->birthday) && strtotime($request->birthday) ? date("Y-m-d", strtotime($request->birthday)) : null;
+        // Handle date conversion for doj (format: d-m-Y to Y-m-d)
+        $doj = !empty($request->doj) && strtotime($request->doj) ? date("Y-m-d", strtotime($request->doj)) : null;
+        
+        try {
+            $staff = $company->users()->create(array(
+                'address'                   => !empty($request->address) ? $request->address : null,
+                'age'                       => !empty($request->age) ? (int)$request->age : null,
+                'birthday'                  => $birthday,
+                'branch_id'                 => !empty($request->branch_id) ? (int)$request->branch_id : null,
+                'commission_rate'           => $request->commission_rate,
+                'doj'                       => $doj,
+                'email'                     => $request->email,
+                'first_name'                => $request->first_name,
+                'last_name'                 => !empty($request->last_name) ? $request->last_name : null,
+                'locale'                    => $user->locale,
+                'phone'                     => !empty($request->phone) ? $request->phone : null,
+                'profile_image_filename'    => $profile_image_filename,
+                'staff_code'                => !empty($request->staff_code) ? $request->staff_code : null,
+                'staff_role'                => !empty($request->staff_role) ? $request->staff_role : null
+            ));
+            $staff->password = 'InsuraPasswordsAreLongButNeedToBeSetByInvitedUsersSuchAsThis';
+            $staff->role = 'staff';
+            $staff->save();
+        } catch (\Exception $e) {
+            \Log::error('Error creating staff: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return redirect()->back()->withErrors(['Error creating staff: ' . $e->getMessage()])->withInput();
+        }
 
-        // Dispatch job to send welcome email
-        $token = hash_hmac('sha256', str_random(40), config('app.key'));
-        DB::table(config('auth.password.table'))->insert(['email' => $staff->email, 'token' => $token, 'created_at' => new Carbon]);
-        $job = new SendWelcomeEmail($token, $staff);
-        $this->dispatch($job->onQueue('emails')->delay(10));
+        // Dispatch job to send welcome email - wrap in try-catch so email failure doesn't break staff creation
+        try {
+            $token = hash_hmac('sha256', Str::random(40), config('app.key'));
+            DB::table(config('auth.password.table'))->insert(['email' => $staff->email, 'token' => $token, 'created_at' => new Carbon]);
+            dispatch((new SendWelcomeEmail($token, $staff))->onQueue('emails')->delay(10));
+        } catch (\Exception $e) {
+            // Log email error but don't fail the staff creation
+            \Log::warning('Failed to send welcome email to staff: ' . $e->getMessage());
+        }
 
         return redirect()->back()->with('success', trans('staff.message.success.added'));
     }
@@ -140,7 +171,7 @@ class StaffController extends Controller {
         ));
 
         if ($request->hasFile('profile_image') && $request->file('profile_image')->isValid()) {
-            $profile_image_filename = str_random(7). '-profile.' . str_replace('jpeg', 'jpg', $request->file('profile_image')->guessExtension());
+            $profile_image_filename = Str::random(7) . '-profile.' . str_replace('jpeg', 'jpg', $request->file('profile_image')->guessExtension());
             try{
                 $request->file('profile_image')->move(storage_path('app/images/users/'), $profile_image_filename);
                 $profile_image_storage_path = 'images/users/' . $staff->profile_image_filename;
@@ -179,7 +210,7 @@ class StaffController extends Controller {
         } elseif($request->status === 'A') {
             // If activating and current password is the default one, generate a new password
             if($request->has('tokenn') && $request->tokenn === 'InsuraPasswordsAreLongButNeedToBeSetByInvitedUsersSuchAsThis') {
-                $staff->password = bcrypt(str_random(8));
+                $staff->password = bcrypt(Str::random(8));
             }
             // Otherwise, keep existing password (don't change it)
         }

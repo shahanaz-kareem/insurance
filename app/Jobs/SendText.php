@@ -9,11 +9,10 @@ use App\Models\Text;
 use App\Models\User;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Bus\SelfHandling;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Twilio\Rest\Client as TwilioClient;
 
-class SendText extends Job implements SelfHandling, ShouldQueue {
+class SendText extends Job implements ShouldQueue {
     use InteractsWithQueue, SerializesModels;
 
     /**

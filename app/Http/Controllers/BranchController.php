@@ -195,18 +195,36 @@ class BranchController extends Controller {
         return $filters;
     }
 
-    public function getOne(Request $request) {
+    public function getOne(Request $request, Branches $branch) {
         $user = $request->user();
-        $view_data['branch']    = DB::table('branches')->where('id','=',$request->branch_id)->get();
-        $view_data['clients']   = DB::table('users')->where('branch_id','=',$request->branch_id)->where('role','=','client')->get();
-        $view_data['policies']   = DB::table('policies')->where('branch_id','=',$request->branch_id)->get();
-        if(empty($view_data['policies'])){
-            $policy_id = 0;
-        } else {
-            $policy_id = $view_data['policies'][0]->id;
-        }
-
-        $view_data['amount']     = DB::table("payments")->select(DB::raw("SUM(amount) as total_sales"))->where('policy_id','=',$policy_id)->get();
+        $branch_id = $branch->id;
+        
+        // Return branch as array with single element to match view expectations ($branch[0])
+        // Convert Eloquent model to stdClass object to match DB query result format
+        $branch_obj = (object)[
+            'id' => $branch->id,
+            'branch_code' => $branch->branch_code,
+            'branch_name' => $branch->branch_name,
+            'branch_email' => $branch->branch_email,
+            'branch_phone' => $branch->branch_phone,
+            'branch_address' => $branch->branch_address,
+            'branch_location' => $branch->branch_location,
+        ];
+        $view_data['branch'] = [$branch_obj];
+        
+        $view_data['clients']   = DB::table('users')->where('branch_id','=',$branch_id)->where('role','=','client')->get();
+        $view_data['policies']   = DB::table('policies')->where('branch_id','=',$branch_id)->get();
+        
+        // Calculate total sales from all policies for this branch
+        $total_sales_result = DB::table("payments")
+            ->join('policies', 'payments.policy_id', '=', 'policies.id')
+            ->where('policies.branch_id', '=', $branch_id)
+            ->select(DB::raw("COALESCE(SUM(payments.amount), 0) as total_sales"))
+            ->first();
+        
+        // Return amount as array with single element to match view expectations ($amount[0])
+        $view_data['amount'] = [(object)['total_sales' => $total_sales_result->total_sales ?? 0]];
+        
         $view_data['products']     = DB::table("products")->get();
         $view_data['branches']     = DB::table("branches")->get();
 
