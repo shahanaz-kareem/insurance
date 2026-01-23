@@ -1,0 +1,329 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+Design by TEMPLATED
+http://templated.co
+Released for free under the Creative Commons Attribution License
+
+Name       : Skeleton 
+Description: A two-column, fixed-width design with dark color scheme.
+Version    : 1.0
+Released   : 20130902
+
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Insura 2.0.4</title>
+<meta name="keywords" content="" />
+<meta name="description" content="" />
+<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900" rel="stylesheet" />
+<link href="default.css" rel="stylesheet" type="text/css" media="all" />
+<link href="fonts.css" rel="stylesheet" type="text/css" media="all" />
+
+<!--[if IE 6]><link href="default_ie6.css" rel="stylesheet" type="text/css" /><![endif]-->
+
+</head>
+<body>
+<div id="page" class="container">
+	<div id="header">
+		<div id="logo">
+			<img src="images/icon.png" alt="" />
+			<h1><a href="#">Insura</a></h1>
+			<span>DOCUMENTATION</a></span>
+		</div>
+		<div id="menu">
+			<ul>
+				<li class="current_page_item"><a href="#about" accesskey="1" title="About Insura">About</a></li>
+				<li><a href="#requirements" accesskey="2" title="Requirements to install Insura">Requirements</a></li>
+				<li><a href="#installation" accesskey="3" title="Install Insura">Installation</a></li>
+				<li><a href="#manualInstallation" accesskey="4" title="Install Insura Manually">Manual Installation</a></li>
+        <li><a href="#translation" accesskey="5" title="Translate Insura to your Locale">Translation</a></li>
+        <li><a href="#updating" accesskey="6" title="Update Insura to the latest version">Update</a></li>
+				<li><a href="#support" accesskey="7" title="Support for Insura">Support</a></li>
+			</ul>
+		</div>
+	</div>
+	<div id="main">
+		<div id="banner">
+			<img src="images/cover.png" alt="" class="image-full" />
+		</div>
+		<div id="about">
+			<div class="title">
+				<h2>About Insura</h2>
+				<span class="byline">What is it?</span>
+			</div>
+			<p><strong>Insura</strong> is a multi-insurance agency and client management system. It is written in <a href="https://laravel.com" target="_blank"><strong>Laravel</strong></a>, a strong PHP framework, and utilises the <a href="https://semantic-ui.com" target="_blank"><strong>Semantic UI</strong></a> framework for smashing frontend views. Insura allows Insurance agencies to manage their staff, brokers, clients, communication, commissions and reminders all on one system. Managing an insurance Company couldn't be easier, We look deeper into the features later. Have fun :) </p>
+			<ul class="actions">
+				<li><a href="#" class="button">Etiam posuere</a></li>
+			</ul>
+		</div>
+		<div id="requirements">
+			<div class="title">
+				<h2>Requirements</h2>
+				<p class="byline">
+					Insura 2.x's requirements are simply a webserver running <strong>PHP >= 5.5.9</strong> with the following extensions:-
+					<ul>
+						<li>OpenSSL PHP Extension</li>
+						<li>PDO PHP Extension</li>
+						<li>Mbstring PHP Extension</li>
+						<li>Tokenizer PHP Extension</li>
+					</ul>
+				</p>
+			</div>
+		</div>
+		<div id="installation">
+			<div class="title">
+				<h2>Installation</h2>
+				<span class="byline">Installation is easy and will take less than 5 minutes. lets roll.</span>
+			</div>
+			<ul class="style1">
+				<li class="first" id="STEP01">
+					<p class="date"><a href="#STEP01">STEP<b>01</b></a></p>
+					<div class="step-box">
+						<h3>Extract files</h3>
+						<p>Extract the zip file you downloaded from CodeCanyon in a directory where we will work from e.g. extract in <strong>/home/&lt;user&gt;</strong> to get <strong>/home/&lt;user&gt;/Insura-2.0.4</strong> (Recommended for users on shared hosting with cPanel). This location should be away from your webserver's root directory.</p>
+					</div>
+				</li>
+				<li id="STEP02">
+					<p class="date"><a href="#STEP02">STEP<b>02</b></a></p>
+					<div class="step-box">
+						<h3>Database Setup</h3>
+						<p>Insura supports a range of databases (MySQL, PostgreSQL, SQLite3 and SQL). Depending on your choice of database, create a new database and new user and password for it where applicable. Remember to note down the <strong><i>database name</i></strong> and <strong><i>user</i></strong> and <strong><i>password</i></strong> where applicable as we will use this in step 4.<br/><br/>
+						<strong>NB:</strong> If you are using SQLite, copy the sqlite file to <strong>/home/&lt;user&gt;/Insura-2.0.4/Files/database/</strong> and note down the filename instead e.g. <i><strong>insura.sqlite</strong></i>.</p>
+					</div>
+				</li>
+				<li id="STEP03">
+					<p class="date"><a href="#STEP03">STEP<b>03</b></a></p>
+					<div class="step-box">
+						<h3>Root Directory</h3>
+						<div>
+							<p>There are several ways to configure the root directory depending on your hosting setup.</p>
+							<ul>
+								<li><p>If you can control your domain's document root, e.g when creating a sub-domain in your control panel, point it to <strong>/home/&lt;user&gt;/Insura-2.0.4/Files/public</strong>.</p></li>
+								<li>
+									<p>
+									If your root directory is in your <i><strong>home</strong></i> folder, e.g. <strong>/home/&lt;user&gt;/public_html</strong> where <i><strong>public_html</strong></i> is the root directory, follow these steps:-<br/>
+									>> Back up your current root directory by renaming it i.e. <i><strong>public_html</strong></i> to <strong>public_html.backup</strong>.<br/>
+									>> From our working directory created in <a href="#STEP01">STEP 1</a>, copy the file called <strong>root_dir</strong> in <strong>Utils</strong> to your home folder.<br/>
+									>> Rename <i><strong>root_dir</strong></i> to <i><strong>public_html</strong></i>
+									</p>
+								</li>
+								<li>
+									<p>
+									If your root directory is not in your <i><strong>home</strong></i> folder (e.g. <strong>/var/www/html</strong> where <i><strong>html</strong></i> is the root directory) or you intend to add as a folder on he root directory (e.g. <strong>/var/www/html/insura</strong> where <i><strong>html</strong></i> is the root directory), follow these steps:-.<br/>
+									>> Create a symbolic link to <i><strong>/home/&lt;user&gt;/Insura-2.0.4/Files/public</strong></i><br/>
+									>> Replace your document root with the link (To have something like <i>http://www.example.com</i>) or add it to your document root as a folder (To have something like <i>http://www.example.com/insura</i>) as preferred. Ensure you rename the copied link correctly for it to work.
+									</p>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</li>
+				<li id="STEP04">
+					<p class="date"><a href="#STEP04">STEP<b>04</b></a></p>
+					<div class="step-box">
+						<h3>Web Setup</h3>
+						<p>
+							Insura ships with a web installer accessible through your browser. After confirming that steps 1 - 3 were successfully completed, please navigate your browser to your domain e.g <i>http://www.example.com</i> or <i>https://www.example.com/insura</i>. A setup page will appear which guides you through the rest of the setup. Use the information we noted down in steps 1-3 to complete the forms. Ensure you key in the correct passwords where applicable.<br/><br/>
+							<strong>NB:</strong> Ensure the webserver has read and write access to the <i><strong>storage</strong></i> and <i><strong>bootstrap</strong></i> folders and everything in them which can be found in in the <strong>/home/&lt;user&gt;/Insura-2.0.4/Files</strong> directory. Also, if you have an SSL certificate for your domain, please use the <strong>https://</strong> scheme to access the site e.g <i>https://www.example.com to improve security.</i><br/>
+							To make https a must when using apache, uncomment <i>(Remove the preceding '<strong>#</strong>' character)</i> lines #<strong>9</strong> and #<strong>10</strong> in the <i><strong>.htaccess</strong></i> file found in your new root directory created in <a href="#STEP03">Step 3</a> above like shown below:<br/>
+							Change<br/>
+							<pre><code><span style="color: #0000BB">09</span><span style="color: #007700">    #RewriteCond %{HTTPS} !on<br/></span><span style="color: #0000BB">10</span><span style="color: #007700">    #RewriteRule ^.*$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]</span></code></pre><br/>
+							to<br/>
+							<pre><code><span style="color: #0000BB">09</span><span style="color: #007700">    RewriteCond %{HTTPS} !on<br/></span><span style="color: #0000BB">10</span><span style="color: #007700">    RewriteRule ^.*$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]</span></code></pre>
+						</p>
+						
+					</div>
+				</li>
+				<li id="STEP05">
+					<p class="date"><a href="#STEP05">STEP<b>05</b></a></p>
+					<div class="step-box">
+						<h3>First Sign In</h3>
+						<p>If all went well and the setup was completed, CONGRATULATIONS! You should now be able to log in and use Insura. You could even ignore the rest of the steps... Just kidding! Move on to step 6.<br/><br/>
+						<strong>NB:</strong> If you encountered an error and re-tried steps 1 - 4 with no luck, skip to the <a href="#manualInstallation">manual installation</a> section.</i></p>
+					</div>
+				</li>
+				<li id="STEP06">
+					<p class="date"><a href="#STEP06">STEP<b>06</b></a></p>
+					<div class="step-box">
+						<h3>Cron Jobs</h3>
+						<p>Insura uses cron jobs to automate reminders. You need to set a cron job that will do this on your server. Below is the sample cron job code. Modify the path to artisan to match your working folder, for our example this would be <i><strong>/home/&lt;your username&gt;/Insura-2.0.4/Files/artisan</strong></i>. When this is done, Insura is fully ready to use, but if you want more, there's more.</p>
+						<pre><code><span style="color: #0000BB"><i>* * * * * php &lt;path to artisan&gt; schedule:run >> /dev/null 2>&1</i><br></span></code></pre>
+						<p>Here is a great <a href="https://youtu.be/WzIqEJkK_pM" target="_blank">YouTube Video</a> to help you with cron jobs if you are new.</p>
+					</div>
+				</li>
+				<li id="STEP07">
+					<p class="date"><a href="#STEP07">STEP<b>07</b></a></p>
+					<div class="step-box">
+						<h3>Supercharging Insura</h3>
+						<p>Insura uses laravel queues to send emails and texts in the background, therefore making your app faster. By basic installation the queue driver is set to sync which is slow, but if you want even more speed and true background execution, the database driver can be used. All you need is to change the queue driver and shell access to run a queue listener using these steps:-</p>
+						<ul>
+							<li>
+								<p>>> In our working folder created in <a href="#STEP01">Step 01</a> (<strong>/home/&lt;user&gt;/Insura-2.0.4</strong>), navigate into <strong>Files</strong>. In there is a file named <strong>.env</strong>. If you cannot see it, ensure you have enabled viewing of hidden files in your file manager settings. This file stores all major settings of insura. Open this file and edit the line with<br/><code>QUEUE_DRIVER=sync</code><br/>to mathch the following:</p>
+								<pre><code><span style="color: #0000BB">14<span style="color: #007700"> QUEUE_DRIVER=database<br></span></span></code></pre>
+								<p>Close and save the file
+							</li>
+							<li>
+								<p>>> Then execute the following command in the <strong>Files</strong> directory to start the listener:<br/><code>php artisan queue:work --daemon --queue default,emails,texts --tries 10 database >> /dev/null 2>&1 &</code><br/>Here is an example of how that may go...</p>
+								<pre style="background-color:#000000;"><code><span style="color: #FFFFFF;">user@example.com:~/Insura-2.0.4/Files$ php artisan queue:work --daemon --queue default,emails,texts --tries 10 database >> /dev/null 2>&1 &<br/>[1] 14638<br/>user@example.com:~/Insura-2.0.4/Files$ _<br/></span></code></pre>
+							</li>
+						</ul>
+						<p>That's pretty much it by now. Feel free to rate us on CodeCanyon as you enjoy the awesome powers of Insura. To add a language to or translate Insura, see <a href="#translation">Translating Insura</a>. To update your installation of insura, see  <a href="#updating">Update Insura</a>.</p>
+					</div>
+				</li>
+			</ul>
+		</div>
+		<div>
+			<div class="title" id="manualInstallation">
+				<h2>Manual Installation</h2>
+				<span class="byline">Below are instructions on how to install.</span>
+			</div>
+			<ul class="style1">
+				<li id="STEP05.01">
+					<p class="date"><a href="#STEP05.01">STEP<b>05.01</b></a></p>
+					<div class="step-box">
+						<h3>Database Setup</h3>
+						<p>In our working folder created in <a href="#STEP01">Step 01</a> (<strong>/home/&lt;user&gt;/Insura-2.0.4</strong>), there is a folder named <strong>Database</strong> which contains an SQL file named <strong>insura.sql</strong>. This file is the system's MySQL database. Import this file (<strong>/home/&lt;user&gt;/Insura-2.0.4/Database/insura.sql</strong>) using phpMyAdmin or whatever system you use. <a href="https://www.youtube.com/watch?v=rt3Ru9-LHnY" target="_blank"><strong>Watch this video</strong></a>  if you are new to importing SQL databases. Remember to note down the <strong><i>database name</i></strong> and MySQL <strong><i>user</i></strong> and <strong><i>password</i></strong> as we will use this in step 4.</p>
+					</div>
+				</li>
+				<li>
+					<p class="date"><a href="#STEP05.02">STEP<b>05.02</b></a></p>
+					<div class="step-box">
+						<h3>Environment Setup</h3>
+						<p>In our working folder created in <a href="#STEP01">Step 01</a> (<strong>/home/&lt;user&gt;/Insura-2.0.4</strong>), navigate into <strong>Files/v2</strong>. In there is a file named <strong>.env</strong>. If you cannot see it, ensure you have enabled viewing of hidden files in your file manager settings. This file stores all major settings of insura. Open this file and edit these settings according to your setup. If you don't know how, refer to the <strong>.env.example</strong> file in the same directory. If you have no use for a setting (e.g. You can use either Amazon SES, Mailgun, Mandrill, SMTP or sendmail for email, one but not both), leave it empty as it can be changed later. Below are the values you will most likely want to change to: </p>
+						<pre><code><span style="color: #0000BB">APP_ENV=production<br/>APP_DEBUG=false<br/>APP_URL=&lt; e.g. https://www.example.com&gt;<br/>DB_DATABASE=&lt;your insura database name&gt;<br/>DB_USERNAME=&lt;your insura database username&gt;<br/>DB_PASSWORD=&lt;the insura database password&gt;<br/>MAIL_USERNAME=&lt;your mail login email&gt;<br/>SMTP_HOST=&lt; e.g. mail.example.com in case you use SMTP&gt;<br/>SMTP_PASSWORD=&lt;your mail login password in case you use SMTP&gt;</span><span style="color: #007700"><br></span></code></pre>
+						<p><strong>NB:</strong> Never change the <i><strong>APP_KEY</strong></i> value unless you understand what you're doing. Only the web installer can change this value safely.</p>
+					</div>
+				</li>
+				<li>
+					<p class="date"><a href="#">STEP<b>05.03</b></a></p>
+					<div class="step-box">
+						<h3>Finish</h3>
+						<p>
+							At this point, it is safe to retry step 5, but no setup will be presented. You will be directed straight to the login page instead. Use the following credentials to log in:<br/>
+							<strong>Email:</strong> demo@simcycreative.com<br/>
+							<strong>Password:</strong> 123456
+						</p>
+						<p>Please continue with <a href="#STEP06">Step 6</a> above</p>
+					</div>
+				</li>
+			</ul>
+		</div>
+		<div>
+			<div class="title" id="translation">
+				<h2>Translating</h2>
+				<span class="byline">Adding a new Language to Insura? It's simple.</span>
+			</div>
+			<ul class="style1">
+				<p>To add a new language to Insura, you may need some IT experience (not necessarily coding). Follow the steps indicated below:</p><br><br>
+				<li class="first" id="STEP08.01">
+					<p class="date"><a href="#STEP08.01">STEP<b>08.01</b></a></p>
+					<div class="step-box">
+						<h3>Create New Language Folder</h3>
+						<p>Create a new folder in <i>/resources/lang/</i> in our working folder  in <a href="#STEP01">Step 01</a>. Name this folder an ISO version of the language you wish to translate to. I will use <i>France's French</i> language to demonstrate so I will name my folder <strong>fr_FR</strong> where <i>fr</i> is the two character code that represents the French language and <i>FR</i> is the two character code that represents the country France. The result is a folder <i><strong>/resources/lang/fr_FR/</strong></i></p>
+					</div>
+				</li>
+				<li class="first" id="STEP08.02">
+					<p class="date"><a href="#STEP08.02">STEP<b>08.02</b></a></p>
+					<div class="step-box">
+						<h3>Copy Files for Translation</h3>
+						<p>
+							Copy all files in the folder <i>/resources/lang/en_US/</i> to our newly created folder <i>/resources/lang/fr_FR/</i>. You should have the following files in it:
+							<pre><code><span style="color: #0000BB">attachments.php<br>auth.php<br>brokers.php<br>clients.php<br>communication.php<br>companies.php<br>dashboard.php<br>emails.php<br>header.php<br>inbox.php<br>middleware.php<br>notes.php<br>pagination.php<br>passwords.php<br>payments.php<br>policies.php<br>products.php<br>reports.php<br>settings.php<br>setup.php<br>sidebar.php<br>staff.php<br>status.php<br>users.php<br>validation.php<br></span></code></pre>
+						</p>
+					</div>
+				</li>
+				<li class="first" id="STEP08.03">
+					<p class="date"><a href="#STEP08.03">STEP<b>08.03</b></a></p>
+					<div class="step-box">
+						<h3>Translate the language files</h3>
+						<p>
+							We will now do the actual language translations by editing the copied files. I will use an example to demonstrate how to go about this by translating the <i><strong>users.php</strong></i> file.<br>Initially, the file looks like this:
+							<pre><code><span style="color: #0000BB"> 1</span><span style="color: #007700">&lt;?php<br></span><span style="color: #0000BB"> 2</span><span style="color: #007700"><br></span><span style="color: #0000BB"> 3</span><span style="color: #007700">return [<br></span><span style="color: #0000BB"> 4</span><span style="color: #007700"><br></span><span style="color: #0000BB"> 5</span><span style="color: #007700">    /*<br></span><span style="color: #0000BB"> 6</span><span style="color: #007700">    |--------------------------------------------------------------------------<br></span><span style="color: #0000BB"> 7</span><span style="color: #007700">    | User Language Lines<br></span><span style="color: #0000BB"> 8</span><span style="color: #007700">    |--------------------------------------------------------------------------<br></span><span style="color: #0000BB"> 9</span><span style="color: #007700">    |<br></span><span style="color: #0000BB">10</span><span style="color: #007700">    | The following language lines are the default lines which match text used<br></span><span style="color: #0000BB">11</span><span style="color: #007700">    | with the User model on Insura.<br></span><span style="color: #0000BB">12</span><span style="color: #007700">    |<br></span><span style="color: #0000BB">13</span><span style="color: #007700">    */<br></span><span style="color: #0000BB">14</span><span style="color: #007700"><br></span><span style="color: #0000BB">15</span><span style="color: #007700">    'messages'      => [<br></span><span style="color: #0000BB">16</span><span style="color: #007700">        'error'     => [<br></span><span style="color: #0000BB">17</span><span style="color: #007700">            'missing'   => 'No such user was found!'<br></span><span style="color: #0000BB">18</span><span style="color: #007700">        ]<br></span><span style="color: #0000BB">19</span><span style="color: #007700">    ],<br></span><span style="color: #0000BB">20</span><span style="color: #007700"><br></span><span style="color: #0000BB">21</span><span style="color: #007700">];<br></span><span style="color: #0000BB">22</span><span style="color: #007700"><br></span></code></pre>
+							We will translate the values after the <strong>=></strong> sign only. This will give the result below:
+							<strong>NB:</strong> Do NOT translate words begining with a colon symbol i.e words like <i><strong>:name</strong></i>. These are used by Insura internaly and should be left as they are.
+              <pre><code><span style="color: #0000BB"> 1</span><span style="color: #007700">&lt;?php<br></span><span style="color: #0000BB"> 2</span><span style="color: #007700"><br></span><span style="color: #0000BB"> 3</span><span style="color: #007700">return [<br></span><span style="color: #0000BB"> 4</span><span style="color: #007700"><br></span><span style="color: #0000BB"> 5</span><span style="color: #007700">    /*<br></span><span style="color: #0000BB"> 6</span><span style="color: #007700">    |--------------------------------------------------------------------------<br></span><span style="color: #0000BB"> 7</span><span style="color: #007700">    | User Language Lines<br></span><span style="color: #0000BB"> 8</span><span style="color: #007700">    |--------------------------------------------------------------------------<br></span><span style="color: #0000BB"> 9</span><span style="color: #007700">    |<br></span><span style="color: #0000BB">10</span><span style="color: #007700">    | The following language lines are the default lines which match text used<br></span><span style="color: #0000BB">11</span><span style="color: #007700">    | with the User model on Insura.<br></span><span style="color: #0000BB">12</span><span style="color: #007700">    |<br></span><span style="color: #0000BB">13</span><span style="color: #007700">    */<br></span><span style="color: #0000BB">14</span><span style="color: #007700"><br></span><span style="color: #0000BB">15</span><span style="color: #007700">    'messages'      => [<br></span><span style="color: #0000BB">16</span><span style="color: #007700">        'error'     => [<br></span><span style="color: #9900BB">17</span><span style="color: #007700">            'missing'   => '<span style="color: #997700">Aucun utilisateur de ce type n'a été trouvé!</span>'<br></span><span style="color: #0000BB">18</span><span style="color: #007700">        ]<br></span><span style="color: #0000BB">19</span><span style="color: #007700">    ],<br></span><span style="color: #0000BB">20</span><span style="color: #007700"><br></span><span style="color: #0000BB">21</span><span style="color: #007700">];<br></span><span style="color: #0000BB">22</span><span style="color: #007700"><br></span></code></pre>
+						</p>
+					</div>
+				</li>
+				<li class="first" id="STEP08.04">
+					<p class="date"><a href="#STEP08.04">STEP<b>08.04</b></a></p>
+					<div class="step-box">
+						<h3>Add the new language to Insura's Configuration</h3>
+						<p>
+							We will then add our new language to the <i>/config/insura.php</i> file at the languages section as shown below:
+							<pre><code><span style="color: #0000BB">   1</span><span style="color: #007700">&lt;?php<br>    <br>        ...<br>    <br></span><span style="color: #0000BB">1543</span><span style="color: #007700">    'languages'     => [<br></span><span style="color: #0000BB">1544</span><span style="color: #007700">        [<br></span><span style="color: #0000BB">1545</span><span style="color: #007700">            'identifiers'   => ['en_US.UTF-8', 'en.UTF-8', 'en-US', 'en'],<br></span><span style="color: #0000BB">1546</span><span style="color: #007700">            'locale'        => 'en_US',<br></span><span style="color: #0000BB">1547</span><span style="color: #007700">            'name'          => 'English (US)'<br></span><span style="color: #9900BB">1548</span><span style="color: #007700">        ]<span style="color: #997700;">,</span><br></span><span style="color: #9900BB">1549</span><span style="color: #997700">        [<br></span><span style="color: #9900BB">1550</span><span style="color: #997700">            'identifiers'   => ['fr_FR.UTF-8', 'fr.UTF-8', 'fr-FR', 'fr'],<br></span><span style="color: #9900BB">1551</span><span style="color: #997700">            'locale'        => 'fr_FR',<br></span><span style="color: #9900BB">1552</span><span style="color: #997700">            'name'          => 'French (FR)'<br></span><span style="color: #9900BB">1553</span><span style="color: #997700">        ]<br></span><span style="color: #0000BB">1554</span><span style="color: #007700">    ],<br>    <br>        ...<br>    </span></code></pre>
+              Now the French language will be available in all pages where one can change languages (i.e. <i>login</i> and <i>settings</i> pages.
+            </p>
+					</div>
+				</li>
+			</ul>
+		</div>
+    <div>
+      <div class="title" id="updating">
+        <h2>Update Insura</h2>
+        <span class="byline">Update Insura to a newer version.</span>
+      </div>
+      <ul class="style1">
+        <li class="first">
+          <p class="date"><=2.0.0</p>
+          <div class="step-box">
+            <h3>For versions below 2.0.1 (2.0.0)</h3>
+            <p>
+              If you currently run Insura version 2.0.0 follow these instructions:
+              <ol>
+                <li>Extract the update files over your current installation.</li>
+                <li>Delete the <i><strong>/bootstrap/cache/config.php</strong></i> file.</li>
+                <li>Delete the <i><strong>/bootstrap/cache/routes.php</strong></i> file.</li>
+                <li>Navigate to <i>http(s)://&lt;Your Installation URL&gt;<strong>/update</strong></i> on your browser.</li>
+              </ol>
+            </p>
+          </div>
+        </li>
+        <li class="first">
+          <p class="date">>=2.0.1</p>
+          <div class="step-box">
+            <h3>For versions above 2.0.0 (>=2.0.1)</h3>
+            <p>
+              If you currently run Insura version 2.0.1 or greater follow these instructions:
+              <ol>
+                <li>Extract the update files over your current installation.</li>
+                <li>Navigate to <i>http(s)://&lt;Your Installation URL&gt;<strong>/update</strong></i> on your browser.</li>
+              </ol>
+            </p>
+          </div>
+        </li>
+        <li class="first">
+          <p class="date">NOTE</p>
+          <div class="step-box">
+            <p>Do <strong>NOT</strong> update insura using the above method if you do not want to loose any customization already done.</p>
+            <p>Do <strong>NOT</strong> use a release archive for updating unless you intend to start afresh. Doing so will erase all your configurations and replace all files to default. <strong>ONLY</strong> use update archives.
+          </div>
+        </li>
+      </ul>
+    </div>
+		<div>
+			<div class="title" id="support">
+				<h2>Support</h2>
+				<span class="byline">We are always here to help.</span>
+			</div>
+			<ul class="style1">
+				<p>Once again, thank you so much for purchasing this system. As I said at the beginning, I'd be glad to help you if you have any questions relating to this system. No guarantees, but I'll do my best to assist. If you have a more general question relating to the systems on CodeCanyon, you might consider visiting the forums and asking your question in the "Item Discussion" section.</p><br><br>
+				<li class="first">
+					<p class="date"><a href="#"><b>INFO</b></a></p>
+					<div class="step-box">
+						<h3>Contact info</h3>
+						<p>Feel free to reach out if you have any questions, suggetions, customization requests or just saying Hi;<br><strong>Email:</strong> <a href="mailto:hello@simcycreative.com" target="_blank">hello@simcycreative.com</a><br>
+							<strong>Support:</strong> <a href="https://simcycreative.freshdesk.com/" target="_blank">Support</a></p>
+					</div>
+				</li>
+			</ul>
+		</div>
+		<div id="copyright">
+			<span>Insura 2.0.4 &copy; Simcy Creative. All rights reserved. |  <a href="https://simcycreative.freshdesk.com/" target="_blank">Support</a></span>
+			<span>Design by <a href="http://templated.co" target="_blank" rel="nofollow">TEMPLATED</a>.</span>
+		</div>
+	</div>
+</div>
+</body>
+</html>
