@@ -132,6 +132,7 @@ Route::delete('commission/{commission}', [CommissionController::class, 'delete']
 Route::get('staff', [StaffController::class, 'getAll'])->name('staff.all');
 Route::get('staff/{staff}', [StaffController::class, 'getOne'])->name('staff.one');
 Route::post('staff', [StaffController::class, 'add'])->name('staff.add');
+Route::post('staff/{staff}', [StaffController::class, 'edit'])->name('staff.edit');
 Route::delete('staff/{staff}', [StaffController::class, 'delete'])->name('staff.delete');
 
 // Client routes...

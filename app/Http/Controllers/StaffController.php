@@ -123,14 +123,20 @@ class StaffController extends Controller {
     public function edit(Request $request, User $staff) {
         $this->validate($request, array(
             'address'           => 'max:256|string',
-            'birthday'          => 'date',
+            'age'                => 'integer|nullable',
+            'birthday'           => 'date',
+            'branch_id'          => 'integer|nullable',
             'commission_rate'   => 'numeric|required',
             'company_id'        => 'integer|sometimes',
+            'doj'                => 'date|nullable',
             'email'             => "email|required|unique:users,email,{$staff->id}",
             'first_name'        => 'max:32|min:3|string|required',
             'last_name'         => 'max:32|min:3|string',
             'phone'             => 'max:16|string',
-            'profile_image'     => 'image'
+            'profile_image'     => 'image',
+            'staff_code'        => 'string|nullable',
+            'staff_role'        => 'string|nullable',
+            'status'            => 'string|nullable'
         ));
 
         if ($request->hasFile('profile_image') && $request->file('profile_image')->isValid()) {
@@ -152,17 +158,37 @@ class StaffController extends Controller {
         }
 
         $staff->address                 = $request->address ?: null;
-        $staff->birthday                = $request->birthday ?: null;
+        $staff->age                     = $request->age ?: null;
+        // Handle date conversion for birthday (format: d-m-Y to Y-m-d)
+        $staff->birthday                = $request->birthday ? (strtotime($request->birthday) ? date("Y-m-d", strtotime($request->birthday)) : null) : null;
+        $staff->branch_id               = $request->branch_id ?: null;
         $staff->commission_rate         = $request->commission_rate;
+        // Handle date conversion for doj (format: d-m-Y to Y-m-d)
+        $staff->doj                     = $request->doj ? (strtotime($request->doj) ? date("Y-m-d", strtotime($request->doj)) : null) : null;
         $staff->email                   = $request->email;
         $staff->first_name              = $request->first_name;
         $staff->last_name               = $request->last_name ?: null;
         $staff->phone                   = $request->phone ?: null;
+        $staff->staff_code              = $request->staff_code ?: null;
+        $staff->staff_role              = $request->staff_role ?: null;
+        
+        // Handle status - if inactive, set password to default; if active and password is default, generate new one
+        if($request->status === 'I') {
+            // Set to inactive (default password)
+            $staff->password = 'InsuraPasswordsAreLongButNeedToBeSetByInvitedUsersSuchAsThis';
+        } elseif($request->status === 'A') {
+            // If activating and current password is the default one, generate a new password
+            if($request->has('tokenn') && $request->tokenn === 'InsuraPasswordsAreLongButNeedToBeSetByInvitedUsersSuchAsThis') {
+                $staff->password = bcrypt(str_random(8));
+            }
+            // Otherwise, keep existing password (don't change it)
+        }
+        
         if(!is_null($request->company_id)) {
             try {
                 $company = Company::findOrFail($request->company_id);
                 $staff->company()->associate($company);
-            }catch(ModelNotFound $e) {
+            }catch(ModelNotFoundException $e) {
                 return redirect()->back()->withErrors(array(
                     trans('companies.message.error.missing')
                 ))->withInput();
@@ -182,26 +208,49 @@ class StaffController extends Controller {
     public function getAll(Request $request) {
         $user = $request->user();
         $view_data = array();
+        
+        // Pre-load currency symbols for performance
+        $currencies_by_code = collect(config('insura.currencies.list'))->keyBy('code');
+        
         if($user->role === 'super') {
             $view_data['companies'] = Company::all();
             $view_data['branches'] = Branches::all();
-            $view_data['staff'] =  User::staff()->withStatus()->simplePaginate(8);
-            $view_data['staff']->transform(function($employee) {
-                $employee->currency_symbol = collect(config('insura.currencies.list'))->keyBy('code')->get($employee->company->currency_code)['symbol'];
+            // Use withSum to avoid N+1 queries - calculate sums in database instead of loading all relationships
+            $view_data['staff'] = User::staff()
+                ->withStatus()
+                ->with('company') // Eager load company to avoid N+1
+                ->withSum('inviteePolicies', 'premium') // Calculate sum in database
+                ->withSum('inviteePayments', 'amount') // Calculate sum in database
+                ->simplePaginate(8);
+            
+            $view_data['staff']->transform(function($employee) use($currencies_by_code) {
+                $employee->currency_symbol = $currencies_by_code->get($employee->company->currency_code)['symbol'];
+                $employee->sales = $employee->invitee_policies_sum_premium ?? 0;
+                $employee->commission = ($employee->commission_rate / 100) * $employee->sales;
+                $employee->paid = $employee->invitee_payments_sum_amount ?? 0;
+                $employee->due = $employee->sales - $employee->paid;
                 return $employee;
             });
         }else {
             $view_data['branches'] = $user->company->branches()->get();
-            $view_data['staff'] = $user->company->staff()->withStatus()->simplePaginate(8);
-            $view_data['staff']->currency_symbol = collect(config('insura.currencies.list'))->keyBy('code')->get($user->company->currency_code)['symbol'];
+            // Use withSum to avoid N+1 queries
+            $view_data['staff'] = $user->company->staff()
+                ->withStatus()
+                ->withSum('inviteePolicies', 'premium') // Calculate sum in database
+                ->withSum('inviteePayments', 'amount') // Calculate sum in database
+                ->simplePaginate(8);
+            
+            $view_data['staff']->currency_symbol = $currencies_by_code->get($user->company->currency_code)['symbol'];
+            
+            $view_data['staff']->transform(function($employee) {
+                $employee->sales = $employee->invitee_policies_sum_premium ?? 0;
+                $employee->commission = ($employee->commission_rate / 100) * $employee->sales;
+                $employee->paid = $employee->invitee_payments_sum_amount ?? 0;
+                $employee->due = $employee->sales - $employee->paid;
+                return $employee;
+            });
         }
-        $view_data['staff']->transform(function($employee) {
-            $employee->sales = $employee->inviteePolicies->sum('premium');
-            $employee->commission = ($employee->commission_rate / 100) * $employee->sales;
-            $employee->paid = $employee->inviteePayments->sum('amount');
-            $employee->due = $employee->sales - $employee->paid;
-            return $employee;
-        });
+        
         $view_data['presenter'] = new SimpleSemanticUIPresenter($view_data['staff']);
         return view($user->role . '.staff.all', $view_data);
     }
@@ -220,10 +269,15 @@ class StaffController extends Controller {
         );
         if($user->role === 'super') {
             $view_data['companies'] = Company::all();
+            $view_data['branches'] = Branches::all();
+        } else {
+            $view_data['branches'] = $user->company->branches()->get();
         }
         $view_data['clients'] = $staff->invitees()->get();
-        $view_data['policies'] = $staff->inviteePolicies->transform(function($policy) {
-            $policy->paid = $policy->payments->sum('amount');
+        // Eager load policies with payment sums to avoid N+1 queries
+        $policies = $staff->inviteePolicies()->withSum('payments', 'amount')->get();
+        $view_data['policies'] = $policies->transform(function($policy) {
+            $policy->paid = $policy->payments_sum_amount ?? 0;
             $policy->due = $policy->premium - $policy->paid;
             $time_to_expiry = strtotime(date('Y-m-d')) - strtotime($policy->expiry);
             $policy->statusClass = $policy->due > 0 ? ($time_to_expiry < 1 ? 'warning' : 'negative') : 'positive';

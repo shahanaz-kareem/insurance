@@ -40,6 +40,10 @@ class CommunicationController extends Controller {
         $user = $request->user();
         $page = $request->page ?: 1;
         $view_data = array();
+        
+        // Eager load relationships to avoid N+1 queries
+        $user->load(['incomingEmails.sender', 'outgoingEmails.recipient', 'incomingTexts.sender', 'outgoingTexts.recipient']);
+        
         $view_data['contacts'] = $user->incomingEmails->map(function($email) {
             return $email->sender;
         })->merge($user->outgoingEmails->map(function($email) {
@@ -52,7 +56,8 @@ class CommunicationController extends Controller {
         $view_data['contacts'] = new LengthAwarePaginator($view_data['contacts']->slice(($page - 1) * 15, 15), $view_data['contacts']->count(), 15, $page);
         $view_data['presenter'] = new SemanticUIPresenter($view_data['contacts']);
         if($user->role === 'super') {
-            $view_data['admins'] = Company::all()->map(function($company) {
+            // Eager load admin relationship to avoid N+1
+            $view_data['admins'] = Company::with('admin')->get()->map(function($company) {
                 return $company->admin;
             });
         }

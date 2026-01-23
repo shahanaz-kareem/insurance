@@ -184,22 +184,37 @@ class BrokerController extends Controller {
         $view_data = array();
         if($user->role === 'super') {
             $view_data['companies'] = Company::all();
-            $view_data['brokers'] =  User::broker()->withStatus()->simplePaginate(8);
+            // Use withSum to avoid N+1 queries
+            $view_data['brokers'] = User::broker()
+                ->withStatus()
+                ->with('company') // Eager load company to avoid N+1
+                ->withSum('inviteePolicies', 'premium') // Calculate sum in database
+                ->withSum('inviteePayments', 'amount') // Calculate sum in database
+                ->simplePaginate(8);
             $view_data['brokers']->transform(function($broker) use($currencies_by_code) {
                 $broker->currency_symbol = $currencies_by_code->get($broker->company->currency_code)['symbol'];
+                $broker->sales = $broker->invitee_policies_sum_premium ?? 0;
+                $broker->commission = ($broker->commission_rate / 100) * $broker->sales;
+                $broker->paid = $broker->invitee_payments_sum_amount ?? 0;
+                $broker->due = $broker->sales - $broker->paid;
                 return $broker;
             });
         }else {
-            $view_data['brokers'] = $user->company->brokers()->withStatus()->simplePaginate(8);
+            // Use withSum to avoid N+1 queries
+            $view_data['brokers'] = $user->company->brokers()
+                ->withStatus()
+                ->withSum('inviteePolicies', 'premium') // Calculate sum in database
+                ->withSum('inviteePayments', 'amount') // Calculate sum in database
+                ->simplePaginate(8);
             $view_data['brokers']->currency_symbol = $currencies_by_code->get($user->company->currency_code)['symbol'];
+            $view_data['brokers']->transform(function($broker) {
+                $broker->sales = $broker->invitee_policies_sum_premium ?? 0;
+                $broker->commission = ($broker->commission_rate / 100) * $broker->sales;
+                $broker->paid = $broker->invitee_payments_sum_amount ?? 0;
+                $broker->due = $broker->sales - $broker->paid;
+                return $broker;
+            });
         }
-        $view_data['brokers']->transform(function($broker) {
-            $broker->sales = $broker->inviteePolicies->sum('premium');
-            $broker->commission = ($broker->commission_rate / 100) * $broker->sales;
-            $broker->paid = $broker->inviteePayments->sum('amount');
-            $broker->due = $broker->sales - $broker->paid;
-            return $broker;
-        });
         $view_data['presenter'] = new SimpleSemanticUIPresenter($view_data['brokers']);
         return view($user->role . '.brokers.all', $view_data);
     }
@@ -220,8 +235,10 @@ class BrokerController extends Controller {
             $view_data['companies'] = Company::all();
         }
         $view_data['clients'] = $broker->invitees()->get();
-        $view_data['policies'] = $broker->inviteePolicies->transform(function($policy) {
-            $policy->paid = $policy->payments->sum('amount');
+        // Eager load policies with payment sums to avoid N+1 queries
+        $policies = $broker->inviteePolicies()->withSum('payments', 'amount')->get();
+        $view_data['policies'] = $policies->transform(function($policy) {
+            $policy->paid = $policy->payments_sum_amount ?? 0;
             $policy->due = $policy->premium - $policy->paid;
             $time_to_expiry = strtotime(date('Y-m-d')) - strtotime($policy->expiry);
             $policy->statusClass = $policy->due > 0 ? ($time_to_expiry < 1 ? 'warning' : 'negative') : 'positive';

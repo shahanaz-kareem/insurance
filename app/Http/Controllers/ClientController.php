@@ -245,12 +245,21 @@ class ClientController extends Controller {
                     $company->custom_fields_metadata = collect(json_decode($company->custom_fields_metadata ?: '[]'));
                     return $company;
                 });
-                // Load paginated clients with eager loading
-                $view_data['clients'] = User::client()->withStatus()->with('policies', 'payments')->simplePaginate(8);
+                // Load paginated clients with eager loading - use withSum to avoid N+1
+                $view_data['clients'] = User::client()
+                    ->withStatus()
+                    ->with('company') // Eager load company to avoid N+1
+                    ->withSum('policies', 'premium') // Calculate sum in database
+                    ->withSum('payments', 'amount') // Calculate sum in database
+                    ->withCount('policies')
+                    ->simplePaginate(8);
                 // Load all users for dropdown WITHOUT their policies to speed up
                 $view_data['allusers'] = User::client()->withStatus()->get();
                 $view_data['clients']->transform(function($client) use($currencies_by_code) {
                     $client->currency_symbol = $currencies_by_code->get($client->company->currency_code)['symbol'];
+                    $client->premiums = $client->policies_sum_premium ?? 0;
+                    $client->paid = $client->payments_sum_amount ?? 0;
+                    $client->due = $client->premiums - $client->paid;
                     return $client;
                 });
                 break;
@@ -263,8 +272,13 @@ class ClientController extends Controller {
                 $view_data['clients']->currency_symbol = $currencies_by_code->get($user->company->currency_code)['symbol'];
                 break;
             case 'broker':
-                // Load paginated clients with eager loading
-                $view_data['clients'] = $user->invitees()->withStatus()->with('policies', 'payments')->simplePaginate(8);
+                // Load paginated clients with eager loading - use withSum to avoid N+1
+                $view_data['clients'] = $user->invitees()
+                    ->withStatus()
+                    ->withSum('policies', 'premium') // Calculate sum in database
+                    ->withSum('payments', 'amount') // Calculate sum in database
+                    ->withCount('policies')
+                    ->simplePaginate(8);
                 // Load all users for dropdown WITHOUT their policies to speed up
                 $view_data['allusers'] = $user->invitees()->withStatus()->get();
                 $view_data['clients']->currency_symbol = $currencies_by_code->get($user->company->currency_code)['symbol'];
@@ -308,11 +322,14 @@ class ClientController extends Controller {
             }
             return $custom_field;
         });
+        // Eager load policies with payment sums to avoid N+1 queries
+        $policies = $client->policies()->withSum('payments', 'amount')->get();
+        
         $view_data = array(
             'client'    => $client,
             'clients'   => $client->company->clients()->get(),  // All clients for selection dropdowns
-            'policies'  => $client->policies->map(function($policy) {
-                $policy->paid = $policy->payments->sum('amount');
+            'policies'  => $policies->map(function($policy) {
+                $policy->paid = $policy->payments_sum_amount ?? 0;
                 $policy->due = $policy->premium - $policy->paid;
                 $time_to_expiry = strtotime(date('Y-m-d')) - strtotime($policy->expiry);
                 $policy->statusClass = $policy->due > 0 ? ($time_to_expiry < 1 ? 'warning' : 'negative') : 'positive';

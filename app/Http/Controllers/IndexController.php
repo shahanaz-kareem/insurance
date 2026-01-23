@@ -37,20 +37,39 @@ class IndexController extends Controller {
         switch($user->role) {
             case 'broker':
             case 'staff':
-                $view_data['latest_policies'] = $user->inviteePolicies()->orderBy('created_at', 'desc')->take(10)->get();
+                // Use withSum to avoid N+1 queries
+                $view_data['latest_policies'] = $user->inviteePolicies()
+                    ->withSum('payments', 'amount')
+                    ->orderBy('created_at', 'desc')
+                    ->take(10)
+                    ->get();
                 break;
             case 'client':
-                $view_data['latest_policies'] = $user->policies()->orderBy('created_at', 'desc')->take(10)->get();
+                // Use withSum to avoid N+1 queries
+                $view_data['latest_policies'] = $user->policies()
+                    ->withSum('payments', 'amount')
+                    ->orderBy('created_at', 'desc')
+                    ->take(10)
+                    ->get();
                 break;
             case 'admin':
-                $view_data['latest_policies'] = $view_data['company']->policies()->orderBy('created_at', 'desc')->take(10)->get();
+                // Use withSum to avoid N+1 queries
+                $view_data['latest_policies'] = $view_data['company']->policies()
+                    ->withSum('payments', 'amount')
+                    ->orderBy('created_at', 'desc')
+                    ->take(10)
+                    ->get();
                 break;
             case 'super':
-                $view_data['latest_policies'] = Policy::orderBy('created_at', 'desc')->take(10)->get();
+                // Use withSum to avoid N+1 queries
+                $view_data['latest_policies'] = Policy::withSum('payments', 'amount')
+                    ->orderBy('created_at', 'desc')
+                    ->take(10)
+                    ->get();
                 break;
         }
         $view_data['latest_policies']->transform(function($policy) {
-            $policy->paid = $policy->payments->sum('amount');
+            $policy->paid = $policy->payments_sum_amount ?? 0;
             $policy->due = $policy->premium - $policy->paid;
             $time_to_expiry = strtotime(date('Y-m-d')) - strtotime($policy->expiry);
             $policy->statusClass = $policy->due > 0 ? ($time_to_expiry < 1 ? 'warning' : 'negative') : 'positive';

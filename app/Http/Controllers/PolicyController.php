@@ -284,7 +284,12 @@ class PolicyController extends Controller {
 
         switch($user->role) {
             case 'super':
-                $view_data['policies'] = $user->company->policies()->with('branch', 'payments')->insuraFilter($filters)->paginate(15);
+                // Eager load all relationships to avoid N+1 queries
+                $view_data['policies'] = $user->company->policies()
+                    ->with(['branch', 'client', 'product']) // Eager load relationships
+                    ->withSum('payments', 'amount') // Calculate sum in database
+                    ->insuraFilter($filters)
+                    ->paginate(15);
                 //$view_data['policies']  = DB::table('policies')->get();
                 $view_data['clients']  = $user->company->clients()->get();
                 $view_data['products'] = DB::table('products')->get();
@@ -310,12 +315,22 @@ class PolicyController extends Controller {
                 //$view_data['clients'] = DB::table('users')->where('role','=','client')->get();
                 break;
             case 'broker':
-                $view_data['policies'] = $user->inviteePolicies()->with('payments')->insuraFilter($filters)->paginate(15);
+                // Eager load all relationships to avoid N+1 queries
+                $view_data['policies'] = $user->inviteePolicies()
+                    ->with(['client', 'product', 'branch']) // Eager load relationships
+                    ->withSum('payments', 'amount') // Calculate sum in database
+                    ->insuraFilter($filters)
+                    ->paginate(15);
                 $view_data['clients'] = $user->invitees()->get();
                 //$view_data['clients'] = DB::table('users')->where('role','=','client')->get();
                 break;
             case 'client':
-                $view_data['policies'] = $user->policies()->with('payments')->insuraFilter($filters)->paginate(15);
+                // Eager load all relationships to avoid N+1 queries
+                $view_data['policies'] = $user->policies()
+                    ->with(['product', 'branch']) // Eager load relationships
+                    ->withSum('payments', 'amount') // Calculate sum in database
+                    ->insuraFilter($filters)
+                    ->paginate(15);
                 break;
         }
         $view_data['policies']->currency_symbol = $currencies_by_code->get($user->company->currency_code)['symbol'];
@@ -376,8 +391,12 @@ class PolicyController extends Controller {
      */
     public function getOne(Request $request, Policy $policy) {
         $user = $request->user();
+        // Eager load relationships to avoid N+1 queries
+        $policy->load(['client.company', 'product', 'branch']);
+        $policy->loadSum('payments', 'amount');
+        
         $policy->currency_symbol = collect(config('insura.currencies.list'))->keyBy('code')->get($policy->client->company->currency_code)['symbol'];
-        $policy->paid = $policy->payments->sum('amount');
+        $policy->paid = $policy->payments_sum_amount ?? 0;
         $policy->due = $policy->premium - $policy->paid;
         $policy->active = (time() - strtotime($policy->expiry)) < 0;
         $policy->statusClass = $policy->due > 0 ? ($policy->active ? 'orange' : 'red') : 'green';

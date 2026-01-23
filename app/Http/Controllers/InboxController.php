@@ -36,6 +36,9 @@ class InboxController extends Controller {
     public function getAll(Request $request) {
         $user = $request->user();
         $view_data = array();
+        // Eager load company relationships to avoid N+1 queries
+        $user->load(['company.admin', 'company.staff', 'company.users', 'invitees', 'inviter']);
+        
         switch($user->role) {
             case 'admin':
             case 'staff':
@@ -55,6 +58,13 @@ class InboxController extends Controller {
                 $view_data['contacts'] = User::whereNotIn('id', array($user->id))->get();
                 break;
         }
+        // Eager load chats to avoid N+1 queries
+        $view_data['contacts']->load(['incomingChats' => function($query) use($user) {
+            $query->where('sender_id', $user->id);
+        }, 'outgoingChats' => function($query) use($user) {
+            $query->where('recipient_id', $user->id);
+        }]);
+        
         $view_data['contacts']->transform(function($contact) use($user) {
             $incoming_chats = $contact->incomingChats->where('sender_id', $user->id)->map(function($chat) {
                 $chat->class = 'me';

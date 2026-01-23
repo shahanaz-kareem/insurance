@@ -8,6 +8,7 @@ use App\Models\Email;
 use App\Models\Policy;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AttachmentController extends Controller {
     /*
@@ -59,7 +60,7 @@ class AttachmentController extends Controller {
         ));
         $uploader = $request->user();
         if ($request->hasFile('attachment') && $request->file('attachment')->isValid()) {
-            $attachment_filename = str_random(10) . '.' . $request->file('attachment')->getClientOriginalExtension();
+            $attachment_filename = Str::random(10) . '.' . $request->file('attachment')->getClientOriginalExtension();
             try{
                 $request->file('attachment')->move(storage_path('app/attachments/'), $attachment_filename);
             }catch(FileException $e) {
