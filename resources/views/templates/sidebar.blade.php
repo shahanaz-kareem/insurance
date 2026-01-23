@@ -38,7 +38,7 @@
                 <a class="item" href="{{ route('mutualfunds.all') }}">
                     <i class="ion-ios-chatboxes-outline icon"></i> <div class="content">Mutual Funds </div>
                 </a>
-                <a class="item" href="{{ route('mproducts.index') }}">
+                <a class="item" href="{{ route('mproducts.all') }}">
                     <i class="ion-ios-chatboxes-outline icon"></i> <div class="content">MF Products</div>
                 </a>
                 @if(Auth::user()->role == 'super')

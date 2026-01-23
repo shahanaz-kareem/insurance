@@ -57,7 +57,7 @@
                             )) }}
                         </th>
                         <th colspan="5" class="ui center aligned">
-                            {!! $contacts->render($presenter) !!}
+                            {!! $presenter->render() !!}
                         </th>
                     </tr>
                 </tfoot>

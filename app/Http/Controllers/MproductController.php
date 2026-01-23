@@ -92,6 +92,20 @@ class MproductController extends Controller {
 
         return view('super.mproducts', $view_data);
     }
+
+    /**
+     * Get one mproduct
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Mproduct  $mproduct
+     * @return \Illuminate\Http\Response
+     */
+    public function getOne(Request $request, Mproduct $mproduct) {
+        // Since there's no dedicated view for single mproduct, redirect back to list
+        // This method exists for Laravel 8 route model binding compatibility
+        return redirect()->route('mproducts.all');
+    }
+
     protected function getFilters(Request $request) {
         $master = array('branch_name','branch_code','branch_phone');
         $filters = collect($request->only($master))->reject(function($val) {

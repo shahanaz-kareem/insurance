@@ -3,12 +3,15 @@
 namespace App\Pagination;
 
 use Illuminate\Contracts\Pagination\Paginator as PaginatorContract;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use App\Pagination\UrlWindow;
 use App\Pagination\UrlWindowPresenterTrait;
+use App\Pagination\SemanticUINextPreviousButtonRendererTrait;
 
 class SemanticUIPresenter implements PresenterContract
 {
     use UrlWindowPresenterTrait;
+    use SemanticUINextPreviousButtonRendererTrait;
 
     /**
      * The paginator implementation.
@@ -20,7 +23,7 @@ class SemanticUIPresenter implements PresenterContract
     /**
      * The URL window instance.
      *
-     * @var \Illuminate\Pagination\UrlWindow
+     * @var array|null
      */
     protected $window;
 
@@ -33,7 +36,16 @@ class SemanticUIPresenter implements PresenterContract
     public function __construct(PaginatorContract $paginator)
     {
         $this->paginator = $paginator;
-        $this->window = new UrlWindow($paginator);
+        
+        // Only create UrlWindow for LengthAwarePaginator (has total count)
+        // Simple Paginator doesn't have total count, so we can't create page links
+        if ($paginator instanceof LengthAwarePaginator) {
+            $urlWindow = new UrlWindow($paginator);
+            $this->window = $urlWindow->get();
+        } else {
+            // For simple paginators, set window to null (only prev/next buttons will work)
+            $this->window = null;
+        }
     }
 
     /**
@@ -91,6 +103,44 @@ class SemanticUIPresenter implements PresenterContract
         }
 
         return '<a class="item" href="' . $url . '">' . $page . '</a>';
+    }
+
+    /**
+     * Get the dots wrapper.
+     *
+     * @return string
+     */
+    protected function getDots()
+    {
+        return '<a class="icon item disabled">...</a>';
+    }
+
+    /**
+     * Get the HTML wrapper for an available page link.
+     *
+     * @param  string  $url
+     * @param  int  $page
+     * @param  string|null  $icon
+     * @return string
+     */
+    protected function getAvailablePageWrapper($url, $page, $icon = null)
+    {
+        if ($icon) {
+            return '<a class="icon item" href="' . $url . '">' . $icon . '</a>';
+        }
+
+        return '<a class="item" href="' . $url . '">' . $page . '</a>';
+    }
+
+    /**
+     * Get the HTML wrapper for the active page link.
+     *
+     * @param  int  $page
+     * @return string
+     */
+    protected function getActivePageWrapper($page)
+    {
+        return '<a class="item active">' . $page . '</a>';
     }
 }
 

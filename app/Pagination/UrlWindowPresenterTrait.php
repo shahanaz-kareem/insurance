@@ -9,6 +9,11 @@ trait UrlWindowPresenterTrait {
      * @return string
      */
     protected function getLinks() {
+        // If window is null (simple paginator), return empty string (no page numbers)
+        if ($this->window === null) {
+            return '';
+        }
+
         $html = '';
 
         if (is_array($this->window['first'])) {

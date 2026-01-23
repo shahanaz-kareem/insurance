@@ -139,17 +139,17 @@
                     </div>
                     <div class="field" style="display: none">
                         <label>{{ trans('settings.input.label.product_categories') }}</label>
-                        <textarea name="product_categories" placeholder="{{ trans('settings.input.placeholder.product_categories') }}" rows="2">{{ $companydata->product_categories }}</textarea>
+                        <textarea name="product_categories" placeholder="{{ trans('settings.input.placeholder.product_categories') }}" rows="2">{{ $company->product_categories }}</textarea>
                     </div>
                     <div class="field" style="display: none">
                         <label>{{ trans('settings.input.label.product_sub_categories') }}</label>
-                        <textarea name="product_sub_categories" placeholder="{{ trans('settings.input.placeholder.product_sub_categories') }}" rows="2">{{ $companydata->product_sub_categories }}</textarea>
+                        <textarea name="product_sub_categories" placeholder="{{ trans('settings.input.placeholder.product_sub_categories') }}" rows="2">{{ $company->product_sub_categories }}</textarea>
                     </div>
                     <div class="field">
                         <label>Status</label>
                         <select class="ui fluid search dropdown" name="status">
-                            <option value="1">Active</option>
-                            <option value="0">Inactive</option>
+                            <option value="1" {{ $company->status == 1 ? 'selected' : '' }}>Active</option>
+                            <option value="0" {{ $company->status == 0 ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
                     <div class="actions">

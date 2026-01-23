@@ -97,7 +97,7 @@
             @endforelse
             <!-- end broker -->
             <div class="col-md-12 text-center">
-                {!! $brokers->render($presenter) !!}
+                {!! $presenter->render() !!}
             </div>
         </div>
 @endsection

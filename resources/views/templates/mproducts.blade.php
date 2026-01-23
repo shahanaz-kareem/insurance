@@ -80,7 +80,7 @@
                         @if(Auth::user()->role == 'super')
                         <td class="center aligned">
                             <a href="#" class="green label mini ui" data-target="#editProduct{{ $mproduct->id }}Modal" data-toggle="modal"> {{ trans('products.button.edit') }} </a>
-                            <!-- <a href="{{ action('MproductController@getOne', array($mproduct->id)) }}" class="ui mini grey label"> {{ trans('policies.table.data.action.view') }} </a> -->
+                            {{-- <a href="{{ action('MproductController@getOne', array($mproduct->id)) }}" class="ui mini grey label"> {{ trans('policies.table.data.action.view') }} </a> --}}
 
                             <form action="{{ route('mproducts.delete', array($mproduct->id)) }}" method="POST" style="display:inline;">
                                 {{ csrf_field() }}

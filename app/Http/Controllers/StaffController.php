@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SendWelcomeEmail;
+use App\Models\Branches;
 use App\Models\Company;
 use App\Models\User;
 use App\Pagination\SimpleSemanticUIPresenter;
@@ -183,12 +184,14 @@ class StaffController extends Controller {
         $view_data = array();
         if($user->role === 'super') {
             $view_data['companies'] = Company::all();
+            $view_data['branches'] = Branches::all();
             $view_data['staff'] =  User::staff()->withStatus()->simplePaginate(8);
             $view_data['staff']->transform(function($employee) {
                 $employee->currency_symbol = collect(config('insura.currencies.list'))->keyBy('code')->get($employee->company->currency_code)['symbol'];
                 return $employee;
             });
         }else {
+            $view_data['branches'] = $user->company->branches()->get();
             $view_data['staff'] = $user->company->staff()->withStatus()->simplePaginate(8);
             $view_data['staff']->currency_symbol = collect(config('insura.currencies.list'))->keyBy('code')->get($user->company->currency_code)['symbol'];
         }

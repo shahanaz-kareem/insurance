@@ -131,7 +131,7 @@ class MutualfundController extends Controller {
             }
             if(!empty($filters['product'])){
 
-                $view_data['funds']  = $view_data['funds']->where('mutual_funds.m_product','=',$filters['branch']);
+                $view_data['funds']  = $view_data['funds']->where('mutual_funds.m_product','=',$filters['product']);
             }
                             $view_data['funds']  = $view_data['funds']->orderBy('mutual_funds.id','DESC')
 
@@ -173,7 +173,7 @@ class MutualfundController extends Controller {
             }
             if(!empty($filters['product'])){
 
-                $view_data['funds']  = $view_data['funds']->where('mutual_funds.m_product','=',$filters['branch']);
+                $view_data['funds']  = $view_data['funds']->where('mutual_funds.m_product','=',$filters['product']);
             }
 
 
@@ -205,7 +205,7 @@ class MutualfundController extends Controller {
     }
 
     protected function getFilters(Request $request) {
-        $master = array('client','branch');
+        $master = array('client','branch','product');
         $filters = collect($request->only($master))->reject(function($val) {
             return is_null($val) || empty($val);
         })->toArray();

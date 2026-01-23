@@ -113,9 +113,7 @@ Route::delete('products/{product}', [ProductController::class, 'delete'])->name(
 
 // MProduct routes...
 Route::get('mproducts', [MproductController::class, 'getAll'])->name('mproducts.all');
-Route::get('mproducts', [MproductController::class, 'getAll'])->name('mproducts.index'); // Adding this for backward compatibility
 Route::get('mproducts/{mproduct}', [MproductController::class, 'getOne'])->name('mproducts.one');
-Route::get('mproducts/{mproduct}', [MproductController::class, 'getOne'])->name('mproducts.show'); // Adding this for backward compatibility
 Route::post('mproducts', [MproductController::class, 'add'])->name('mproducts.add');
 Route::post('mproducts/{mproduct}', [MproductController::class, 'edit'])->name('mproducts.edit');
 Route::delete('mproducts/{mproduct}', [MproductController::class, 'delete'])->name('mproducts.delete');

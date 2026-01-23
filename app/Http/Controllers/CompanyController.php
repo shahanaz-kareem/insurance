@@ -150,9 +150,11 @@ class CompanyController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function getAll(Request $request) {
-        $companies = Company::where('id', '!=', $request->user()->company->id)->get();
+        $user = $request->user();
+        $companies = Company::where('id', '!=', $user->company->id)->get();
         return view('super.companies', array(
-            'companies' => $companies
+            'companies' => $companies,
+            'companydata' => $user->company // Pass user's company for default values in forms
         ));
     }
 }

@@ -70,7 +70,7 @@
                             )) }}
                         </th>
                         <th class="center aligned ui" colspan="5">
-                            {!! $products->render($presenter) !!}
+                            {!! $presenter->render() !!}
                         </th>
                     </tr>
                 </tfoot>
