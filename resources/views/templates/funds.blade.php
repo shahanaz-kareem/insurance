@@ -55,7 +55,7 @@
                             <select class="ui fluid search dropdown" name="branch" >
                                 <option></option>
                                 @foreach($branches as $branch)
-                                    <option {{ $branch->id == $staff_branch ? ' selected' : '' }} value="{{ $branch->id }}">{{ $branch->branch_name }}</option>
+                                    <option {{ ($branch->id == $staff_branch) || (isset($filters['branch']) && $filters['branch'] == $branch->id) ? ' selected' : '' }} value="{{ $branch->id }}">{{ $branch->branch_name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -64,7 +64,7 @@
                             <select class="ui fluid search dropdown" name="client" >
                                 <option></option>
                                 @foreach($clients as $client)
-                                    <option  value="{{ $client->id }}">{{ $client->first_name.''.$client->last_name }}</option>
+                                    <option {{ (isset($filters['client']) && $filters['client'] == $client->id) ? ' selected' : '' }} value="{{ $client->id }}">{{ $client->first_name.''.$client->last_name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -74,7 +74,7 @@
                             <select class="ui fluid search dropdown" name="product" >
                                 <option></option>
                                 @foreach($products as $product)
-                                    <option  value="{{ $product->id }}">{{ $product->product_name }}</option>
+                                    <option {{ (isset($filters['product']) && $filters['product'] == $product->id) ? ' selected' : '' }} value="{{ $product->id }}">{{ $product->product_name }}</option>
                                 @endforeach
                             </select>
                         </div>

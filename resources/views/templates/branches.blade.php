@@ -111,8 +111,7 @@
                             )) }}
                         </th>
                         <th class="center aligned ui" colspan="5">
-                          
-
+                            {!! $presenter->render() !!}
                         </th>
                     </tr>
                 </tfoot>

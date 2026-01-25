@@ -143,49 +143,63 @@ class BranchController extends Controller {
 
 
     public function getAll(Request $request) {
-    $user = $request->user();
-    $filters = $this->getFilters($request) ?? [];
+        $user = $request->user();
+        $filters = $this->getFilters($request) ?? [];
 
-    // Ensure keys exist to prevent undefined array key errors
-    $filters['branch_name'] = $filters['branch_name'] ?? '';
-    $filters['branch_code'] = $filters['branch_code'] ?? '';
-    $filters['branch_phone'] = $filters['branch_phone'] ?? '';
+        // Initialize all filter keys with empty strings to prevent undefined array key errors
+        $view_data['filters'] = [
+            'branch_name' => $filters['branch_name'] ?? '',
+            'branch_code' => $filters['branch_code'] ?? '',
+            'branch_phone' => $filters['branch_phone'] ?? ''
+        ];
 
-    $view_data = [];
+        // Build query and apply filters
+        $query = Branches::query();
+        
+        if (!empty($view_data['filters']['branch_name'])) {
+            $query->where('branch_name', 'LIKE', '%' . $view_data['filters']['branch_name'] . '%');
+        }
+        if (!empty($view_data['filters']['branch_code'])) {
+            $query->where('branch_code', 'LIKE', '%' . $view_data['filters']['branch_code'] . '%');
+        }
+        if (!empty($view_data['filters']['branch_phone'])) {
+            $query->where('branch_phone', 'LIKE', '%' . $view_data['filters']['branch_phone'] . '%');
+        }
 
-    if($user->role === 'super') {
-        $view_data['companies']  = Company::where('id', '=', 1)->get();
-        $view_data['companies1'] = Company::where('id', '!=', 1)->get();
-        $view_data['products']   = Branches::paginate(15);
+        // Paginate with filter parameters preserved
+        $view_data['products'] = $query->paginate(15)
+            ->appends($request->only(['branch_name', 'branch_code', 'branch_phone']));
 
-        $view_data['companies']->transform(function($company) {
-            $company->product_categories = collect(explode(',', str_replace(', ', ',', $company->product_categories)))
-                ->reject(fn($c) => empty($c));
-            $company->product_sub_categories = collect(explode(',', str_replace(', ', ',', $company->product_sub_categories)))
-                ->reject(fn($sc) => empty($sc));
-            return $company;
-        });
-    } else {
-        $view_data['companies']  = Company::where('id', '=', 1)->get();
-        $view_data['companies1'] = Company::where('id', '!=', 1)->get();
-        $view_data['products']   = Branches::paginate(15);
+        if($user->role === 'super') {
+            $view_data['companies']  = Company::where('id', '=', 1)->get();
+            $view_data['companies1'] = Company::where('id', '!=', 1)->get();
 
-        $view_data['companies']->transform(function($company) {
-            $company->product_categories = collect(explode(',', str_replace(', ', ',', $company->product_categories)))
-                ->reject(fn($c) => empty($c));
-            $company->product_sub_categories = collect(explode(',', str_replace(', ', ',', $company->product_sub_categories)))
-                ->reject(fn($sc) => empty($sc));
-            return $company;
-        });
+            $view_data['companies']->transform(function($company) {
+                $company->product_categories = collect(explode(',', str_replace(', ', ',', $company->product_categories)))
+                    ->reject(fn($c) => empty($c));
+                $company->product_sub_categories = collect(explode(',', str_replace(', ', ',', $company->product_sub_categories)))
+                    ->reject(fn($sc) => empty($sc));
+                return $company;
+            });
+        } else {
+            $view_data['companies']  = Company::where('id', '=', 1)->get();
+            $view_data['companies1'] = Company::where('id', '!=', 1)->get();
+
+            $view_data['companies']->transform(function($company) {
+                $company->product_categories = collect(explode(',', str_replace(', ', ',', $company->product_categories)))
+                    ->reject(fn($c) => empty($c));
+                $company->product_sub_categories = collect(explode(',', str_replace(', ', ',', $company->product_sub_categories)))
+                    ->reject(fn($sc) => empty($sc));
+                return $company;
+            });
+        }
+
+        $view_data['products']->lastOnPreviousPage = ($view_data['products']->currentPage() - 1) * $view_data['products']->perPage();
+        $view_data['filter'] = !empty($view_data['filters']['branch_name']) || !empty($view_data['filters']['branch_code']) || !empty($view_data['filters']['branch_phone']);
+        $view_data['presenter'] = new SemanticUIPresenter($view_data['products']);
+
+        return view('super.branches', $view_data);
     }
-
-    $view_data['products']->lastOnPreviousPage = ($view_data['products']->currentPage() - 1) * $view_data['products']->perPage();
-    $view_data['filters'] = $filters;
-    $view_data['filter']  = count($filters) > 0;
-    $view_data['presenter'] = new SemanticUIPresenter($view_data['products']);
-
-    return view('super.branches', $view_data);
-}
 
     protected function getFilters(Request $request) {
         $master = array('branch_name','branch_code','branch_phone');

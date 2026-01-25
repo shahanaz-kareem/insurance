@@ -244,8 +244,7 @@
             @endforelse
             <!-- end clients -->
             <div class="col-md-12 text-center">
-             
-                {!! $clients->render() !!}
+                {!! $presenter->render() !!}
             </div>
         </div>
 @endsection

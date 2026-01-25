@@ -193,11 +193,18 @@ class MutualfundController extends Controller {
         }
 
         $view_data['funds']->lastOnPreviousPage = ($view_data['funds']->currentPage() - 1) * $view_data['funds']->perPage();
-        $view_data['filter'] = count($filters) > 0;
-        if($view_data['filter']) {
-            $view_data['filters'] = $filters;
-        }
-        $view_data['funds']->appends($filters);
+        
+        // Initialize filters array to prevent undefined array key errors
+        $view_data['filters'] = [
+            'client' => $filters['client'] ?? '',
+            'branch' => $filters['branch'] ?? '',
+            'product' => $filters['product'] ?? ''
+        ];
+        
+        $view_data['filter'] = !empty($view_data['filters']['client']) || !empty($view_data['filters']['branch']) || !empty($view_data['filters']['product']);
+        
+        // Preserve filter parameters in pagination links
+        $view_data['funds']->appends($request->only(['client', 'branch', 'product']));
         $view_data['presenter'] = new SemanticUIPresenter($view_data['funds']);
 
 

@@ -12,11 +12,13 @@ use App\Models\Commission;
 use App\Models\Mproduct;
 use App\Models\Product;
 use App\Models\User;
+use App\Pagination\SemanticUIPresenter;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Storage;
 
 class ClientController extends Controller {
@@ -83,41 +85,82 @@ class ClientController extends Controller {
             }
         }
 
-        $client = $company->users()->create(array(
-            'address'                   => $request->address ?: null,
-            'birthday'                  => $request->birthday ?: null,
-            'email'                     => $request->email,
-            'first_name'                => $request->first_name,
-            'last_name'                 => $request->last_name ?: null,
-            'locale'                    => $user->locale,
-            'phone'                     => $request->phone ?: null,
-            'profile_image_filename'    => $profile_image_filename
-        ));
-        $client->password = 'InsuraPasswordsAreLongButNeedToBeSetByInvitedUsersSuchAsThis';
-        $client->role = 'client';
-        $client->inviter()->associate($inviter);
-        $client->save();
-
-        // Save custom_fields
-        if(isset($request->custom_fields)) {
-            foreach($request->custom_fields as $custom_field) {
-                $custom_field = new CustomField(array(
-                    'label' => $custom_field['label'],
-                    'type'  => $custom_field['type'],
-                    'uuid'  => $custom_field['uuid'],
-                    'value' => isset($custom_field['value']) ? (is_array($custom_field['value']) ? json_encode($custom_field['value']) : $custom_field['value']) : null
-                ));
-                $custom_field->model()->associate($client);
-                $custom_field->save();
+        try {
+            $client = $company->users()->create(array(
+                'address'                   => $request->address ?: null,
+                'birthday'                  => $request->birthday ?: null,
+                'email'                     => $request->email,
+                'first_name'                => $request->first_name,
+                'last_name'                 => $request->last_name ?: null,
+                'locale'                    => $user->locale,
+                'phone'                     => $request->phone ?: null,
+                'profile_image_filename'    => $profile_image_filename
+            ));
+            
+            // Verify client was created
+            if (!$client || !$client->id) {
+                throw new \Exception('Client creation failed - no ID returned');
             }
+            
+            $client->password = 'InsuraPasswordsAreLongButNeedToBeSetByInvitedUsersSuchAsThis';
+            $client->role = 'client';
+            $client->inviter()->associate($inviter);
+            
+            if (!$client->save()) {
+                throw new \Exception('Failed to save client password and role');
+            }
+            
+            // Refresh to ensure all data is loaded
+            $client->refresh();
+
+            // Save custom_fields
+            if(isset($request->custom_fields)) {
+                foreach($request->custom_fields as $custom_field) {
+                    $custom_field = new CustomField(array(
+                        'label' => $custom_field['label'],
+                        'type'  => $custom_field['type'],
+                        'uuid'  => $custom_field['uuid'],
+                        'value' => isset($custom_field['value']) ? (is_array($custom_field['value']) ? json_encode($custom_field['value']) : $custom_field['value']) : null
+                    ));
+                    $custom_field->model()->associate($client);
+                    $custom_field->save();
+                }
+            }
+
+            // Dispatch job to send welcome email - wrap in try-catch so it doesn't break client creation
+            try {
+                $token = hash_hmac('sha256', Str::random(40), config('app.key'));
+                DB::table(config('auth.password.table'))->insert(['email' => $client->email, 'token' => $token, 'created_at' => new Carbon]);
+                dispatch((new SendWelcomeEmail($token, $client))->onQueue('emails')->delay(10));
+            } catch (\Exception $e) {
+                // Log email dispatch error but don't fail the client creation
+                try {
+                    \Log::error('Failed to dispatch welcome email for client: ' . $client->email, [
+                        'error' => $e->getMessage(),
+                        'client_id' => $client->id
+                    ]);
+                } catch (\Exception $logException) {
+                    // If logging fails, at least log to error_log
+                    error_log('Failed to dispatch welcome email for client: ' . $client->email . ' - Error: ' . $e->getMessage());
+                }
+            }
+
+            return redirect()->back()->with('success', trans('clients.message.success.added'));
+        } catch (\Exception $e) {
+            try {
+                \Log::error('Failed to create client', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'request_data' => $request->except(['password', '_token'])
+                ]);
+            } catch (\Exception $logException) {
+                // If logging fails, at least log to error_log
+                error_log('Failed to create client - Error: ' . $e->getMessage());
+            }
+            return redirect()->back()->withErrors([
+                'error' => trans('clients.message.errors.create_failed') ?: 'Failed to create client. Please try again.'
+            ])->withInput();
         }
-
-        // Dispatch job to send welcome email
-        $token = hash_hmac('sha256', Str::random(40), config('app.key'));
-        DB::table(config('auth.password.table'))->insert(['email' => $client->email, 'token' => $token, 'created_at' => new Carbon]);
-        dispatch((new SendWelcomeEmail($token, $client))->onQueue('emails')->delay(10));
-
-        return redirect()->back()->with('success', trans('clients.message.success.added'));
     }
 
     /**
@@ -239,20 +282,58 @@ class ClientController extends Controller {
         // Merge request data with defaults
         $view_data['filters'] = array_merge($view_data['filters'], $request->only(['client', 'phone', 'branch', 'ref_no', 'policy_ref', 'client_ref']));
         
+        // Build base query based on user role
+        $query = null;
         switch($user->role) {
             case 'super':
                 $view_data['companies'] = Company::all()->map(function($company) {
                     $company->custom_fields_metadata = collect(json_decode($company->custom_fields_metadata ?: '[]'));
                     return $company;
                 });
-                // Load paginated clients with eager loading - use withSum to avoid N+1
-                $view_data['clients'] = User::client()
-                    ->withStatus()
-                    ->with('company') // Eager load company to avoid N+1
-                    ->withSum('policies', 'premium') // Calculate sum in database
-                    ->withSum('payments', 'amount') // Calculate sum in database
+                $query = User::client()->withStatus()->with('company');
+                break;
+            case 'admin':
+            case 'staff':
+                $query = $user->company->clients()->withStatus();
+                break;
+            case 'broker':
+                $query = $user->invitees()->withStatus();
+                break;
+        }
+        
+        // Apply filters to query
+        if (!empty($view_data['filters']['client'])) {
+            $query->where('users.id', $view_data['filters']['client']);
+        }
+        if (!empty($view_data['filters']['phone'])) {
+            $query->where('users.phone', 'LIKE', '%' . $view_data['filters']['phone'] . '%');
+        }
+        if (!empty($view_data['filters']['branch'])) {
+            $query->where('users.branch_id', $view_data['filters']['branch']);
+        }
+        if (!empty($view_data['filters']['ref_no']) || !empty($view_data['filters']['policy_ref'])) {
+            $ref_no = $view_data['filters']['ref_no'] ?: $view_data['filters']['policy_ref'];
+            $query->whereHas('policies', function($q) use ($ref_no) {
+                $q->where('ref_no', 'LIKE', '%' . $ref_no . '%')
+                  ->orWhere('policy_no', 'LIKE', '%' . $ref_no . '%');
+            });
+        }
+        if (!empty($view_data['filters']['client_ref'])) {
+            $query->whereHas('policies', function($q) use ($view_data) {
+                $q->where('ref_no', 'LIKE', '%' . $view_data['filters']['client_ref'] . '%')
+                  ->orWhere('policy_no', 'LIKE', '%' . $view_data['filters']['client_ref'] . '%');
+            });
+        }
+        
+        // Apply eager loading, aggregations, and paginate
+        switch($user->role) {
+            case 'super':
+                $view_data['clients'] = $query
+                    ->withSum('policies', 'premium')
+                    ->withSum('payments', 'amount')
                     ->withCount('policies')
-                    ->simplePaginate(8);
+                    ->paginate(8)
+                    ->appends($request->only(['client', 'phone', 'branch', 'ref_no', 'policy_ref', 'client_ref']));
                 // Load all users for dropdown WITHOUT their policies to speed up
                 $view_data['allusers'] = User::client()->withStatus()->get();
                 $view_data['clients']->transform(function($client) use($currencies_by_code) {
@@ -265,20 +346,23 @@ class ClientController extends Controller {
                 break;
             case 'admin':
             case 'staff':
-                // Load paginated clients with eager loading
-                $view_data['clients'] = $user->company->clients()->withStatus()->withSum('policies', 'premium')->withSum('payments', 'amount')->withCount('policies')->simplePaginate(8);
+                $view_data['clients'] = $query
+                    ->withSum('policies', 'premium')
+                    ->withSum('payments', 'amount')
+                    ->withCount('policies')
+                    ->paginate(8)
+                    ->appends($request->only(['client', 'phone', 'branch', 'ref_no', 'policy_ref', 'client_ref']));
                 // Load all users for dropdown WITHOUT their policies to speed up
                 $view_data['allusers'] = $user->company->clients()->withStatus()->select('users.id', 'users.first_name', 'users.last_name')->get();
                 $view_data['clients']->currency_symbol = $currencies_by_code->get($user->company->currency_code)['symbol'];
                 break;
             case 'broker':
-                // Load paginated clients with eager loading - use withSum to avoid N+1
-                $view_data['clients'] = $user->invitees()
-                    ->withStatus()
-                    ->withSum('policies', 'premium') // Calculate sum in database
-                    ->withSum('payments', 'amount') // Calculate sum in database
+                $view_data['clients'] = $query
+                    ->withSum('policies', 'premium')
+                    ->withSum('payments', 'amount')
                     ->withCount('policies')
-                    ->simplePaginate(8);
+                    ->paginate(8)
+                    ->appends($request->only(['client', 'phone', 'branch', 'ref_no', 'policy_ref', 'client_ref']));
                 // Load all users for dropdown WITHOUT their policies to speed up
                 $view_data['allusers'] = $user->invitees()->withStatus()->get();
                 $view_data['clients']->currency_symbol = $currencies_by_code->get($user->company->currency_code)['symbol'];
@@ -291,6 +375,9 @@ class ClientController extends Controller {
             return $client;
         });
         
+        // Add lastOnPreviousPage for pagination display (like other pages)
+        $view_data['clients']->lastOnPreviousPage = ($view_data['clients']->currentPage() - 1) * $view_data['clients']->perPage();
+        
         // Create branch map for O(1) lookup instead of O(n) loop in view
         if ($user->role === 'super') {
             $branches = \App\Models\Branches::all();
@@ -300,6 +387,9 @@ class ClientController extends Controller {
         $view_data['branchMap'] = $branches->keyBy('id');
         // Keep branches for backward compatibility
         $view_data['branches'] = $branches;
+        
+        // Add SemanticUIPresenter for consistent pagination across all pages
+        $view_data['presenter'] = new SemanticUIPresenter($view_data['clients']);
         
         return view($user->role . '.clients.all', $view_data);
     }
