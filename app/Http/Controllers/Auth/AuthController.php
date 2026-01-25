@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Foundation\Auth\ThrottlesLogins;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Cache\RateLimiter;
 use App\Models\Company;
 use App\Models\User;
 use Validator;
@@ -175,6 +176,22 @@ class AuthController extends Controller {
     }
 
     /**
+     * The user has been authenticated.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\User  $user
+     * @return mixed
+     */
+    protected function authenticated(Request $request, $user)
+    {
+        // Clear any intended URL that might be pointing to auth pages
+        $request->session()->forget('url.intended');
+        
+        // Redirect directly to dashboard
+        return redirect()->route('dashboard');
+    }
+
+    /**
      * Handle a login request to the application. !!OVERRIDE
      *
      * @param  \Illuminate\Http\Request  $request
@@ -287,5 +304,22 @@ public function postLogin(Request $request)
             'last_name' => 'max:32',
             'password' => 'required|confirmed|max:16|min:6'
         ]);
+    }
+
+    /**
+     * Log the user out of the application.
+     * Laravel 8 uses 'logout' method, but we keep 'getLogout' for backward compatibility.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function getLogout(Request $request)
+    {
+        // Use the logout method from AuthenticatesUsers trait
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
+        return redirect($this->redirectAfterLogout);
     }
 }
