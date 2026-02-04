@@ -40,6 +40,7 @@ header
 @endsection
 
 @section('profile_bar')
+    @if($policy->client)
         <!-- client profile -->
 
 
@@ -47,7 +48,11 @@ header
         <div class="ui segment white right-bar-profile right-bar-profile-bottom">
             <div class="user-profile m-b-15">
                 @if ($policy->client->profile_image_filename === 'default-profile.jpg')
-                <div class="text-avatar" style="background-color:{{ collect(config('insura.colors'))->random() }};">{{ strtoupper($policy->client->first_name[0] . $policy->client->last_name[0]) }}</div>
+                <div class="text-avatar" style="background-color:{{ collect(config('insura.colors'))->random() }};">
+                    @if(!empty($policy->client->first_name) && !empty($policy->client->last_name))
+                        {{ strtoupper($policy->client->first_name[0] . $policy->client->last_name[0]) }}
+                    @endif
+                </div>
                 @else
                 <img src="{{ asset('uploads/images/users/' . $policy->client->profile_image_filename) }}" alt="{{ $policy->client->first_name . ' ' . $policy->client->last_name }}"/>
                 @endif
@@ -88,6 +93,7 @@ header
             </div>
         </div>
         <!-- end client profile -->
+    @endif
 @endsection
 
 @section('content')
@@ -151,7 +157,9 @@ header
 
                         <div class="col-sm-6 col-md-8">
                             <span>Policy Name</span>
+                            @if($policy->product)
                             <p>{{ $policy->product->name }} </p>
+                            @endif
                         </div>
 
                     </div>
@@ -427,10 +435,12 @@ header
                                     'svg'   => 'image',
                                     'xls'   => 'excel',
                                     'xlsx'  => 'excel'
-                                )[pathinfo(storage_path('app/attachments/' . $attachment->filename), PATHINFO_EXTENSION)] }} outline icon"></i> {{ $attachment->name }}
+                                )[pathinfo(storage_path('app/attachments/' . $attachment->filename), PATHINFO_EXTENSION)] ?? 'file' }} outline icon"></i> {{ $attachment->name }}
                             </td>
                             <td>{{ date('F d, Y', strtotime($attachment->created_at)) }}</td>
+                            @if($attachment->uploader)
                             <td>{{ $attachment->uploader->first_name . ' ' . $attachment->uploader->last_name }}</td>
+                            @endif
                             <td class="center aligned">
                                 <a class="ui tiny grey label" href="{{ 'http://iworksync.com/ebs/insurance/storage/app/attachments/' . $attachment->filename}}" target="_blank"> {{ trans('policies.table.data.action.view') }} </a>
                                 <form action="{{ route('attachments.delete', array($attachment->id)) }}" method="POST" style="display:inline;">
@@ -474,7 +484,9 @@ header
                         @forelse($policy->payments as $key => $payment)
                         <tr>
                             <td>{{ $key + 1 }}</td>
+                            @if($policy->client)
                             <td>{{ $policy->client->currency_symbol }}{{ $payment->amount }}</td>
+                            @endif
                             <td>{{ date('F d, Y', strtotime($payment->date)) }}</td>
                             <td>
                                 <i class="{{ array(
@@ -484,14 +496,14 @@ header
                                     'cheque'    => 'cheque',
                                     'Online Banking'    => 'Online Banking',
                                     'ECS'    => 'ECS'
-                                )[$payment->method] }} icon"></i> {{ array(
+                                )[$payment->method] ?? 'credit card alternative' }} icon"></i> {{ array(
                                     'card'      => trans('clients.table.data.method.card'),
                                     'cash'      => trans('clients.table.data.method.cash'),
                                     'paypal'    => trans('clients.table.data.method.paypal'),
                                     'cheque'    => 'Cheque',
                                     'Online Banking'    => 'Online Banking',
                                     'ECS'    => 'ECS'
-                                )[$payment->method] }}
+                                )[$payment->method] ?? 'Card' }}
                             </td>
                             <td>
                                 <?php
@@ -502,9 +514,11 @@ header
                         </tr>
                         @empty
                         <tr>
+                            @if($policy->client)
                             <td class="center aligned" colspan="4">{{ trans('policies.table.message.empty.payments', array(
                                 'name'  => $policy->client->first_name
                             )) }}</td>
+                            @endif
                         </tr>
                         @endforelse
                     </tbody>

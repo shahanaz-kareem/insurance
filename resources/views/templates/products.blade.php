@@ -98,3 +98,174 @@
         })(window.insura, window.jQuery);
     </script>
 @endsection
+
+@section('modals')
+    <!-- new product modal -->
+    <div class="ui tiny modal" id="newProductModal">
+        <div class="header">{{ trans('products.modal.header.new') }}</div>
+        <div class="content">
+            <form action="{{ route('products.add') }}" class="ui form" method="POST">
+                {{ csrf_field() }}
+                @if(Auth::user()->role === 'super')
+                    <div class="field required">
+                        <label>{{ trans('products.input.label.company') }}</label>
+                        <div class="ui selection dropdown">
+                            <input name="company_id" type="hidden" value="{{ old('company_id') }}">
+                            <i class="dropdown icon"></i>
+                            <div class="default text">{{ trans('products.input.placeholder.company') }}</div>
+                            <div class="menu">
+                                @foreach($companies as $company)
+                                    <div class="item" data-value="{{ $company->id }}">{{ $company->name }}</div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @endif
+                <div class="field required">
+                    <label>{{ trans('products.input.label.name') }}</label>
+                    <input name="name" placeholder="{{ trans('products.input.placeholder.name') }}" type="text" value="{{ old('name') }}">
+                </div>
+                <div class="field required">
+                    <label>{{ trans('products.input.label.insurer') }}</label>
+                    <input name="insurer" placeholder="{{ trans('products.input.placeholder.insurer') }}" type="text" value="{{ old('insurer') }}">
+                </div>
+                <div class="field required">
+                    <label>{{ trans('products.input.label.category') }}</label>
+                    <div class="ui selection dropdown">
+                        <input name="category" type="hidden" value="{{ old('category') }}">
+                        <i class="dropdown icon"></i>
+                        <div class="default text">{{ trans('products.input.placeholder.category') }}</div>
+                        <div class="menu">
+                            @if(Auth::user()->role === 'super')
+                                @foreach($companies as $company)
+                                    @foreach($company->product_categories as $category)
+                                        <div class="item" data-value="{{ $category }}">{{ $category }}</div>
+                                    @endforeach
+                                @endforeach
+                            @else
+                                @foreach($company->product_categories as $category)
+                                    <div class="item" data-value="{{ $category }}">{{ $category }}</div>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="field required">
+                    <label>{{ trans('products.input.label.sub_category') }}</label>
+                    <div class="ui selection dropdown">
+                        <input name="sub_category" type="hidden" value="{{ old('sub_category') }}">
+                        <i class="dropdown icon"></i>
+                        <div class="default text">{{ trans('products.input.placeholder.sub_category') }}</div>
+                        <div class="menu">
+                            @if(Auth::user()->role === 'super')
+                                @foreach($companies as $company)
+                                    @foreach($company->product_sub_categories as $sub_category)
+                                        <div class="item" data-value="{{ $sub_category }}">{{ $sub_category }}</div>
+                                    @endforeach
+                                @endforeach
+                            @else
+                                @foreach($company->product_sub_categories as $sub_category)
+                                    <div class="item" data-value="{{ $sub_category }}">{{ $sub_category }}</div>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="actions">
+            <div class="ui buttons">
+                <button class="ui cancel button">{{ trans('products.modal.button.cancel.new') }}</button>
+                <div class="or" data-text="{{ trans('products.modal.button.or') }}"></div>
+                <button class="ui positive primary button">{{ trans('products.modal.button.confirm.new') }}</button>
+            </div>
+        </div>
+    </div>
+    <!-- end new product modal -->
+
+    @foreach ($products as $product)
+        <!-- edit product modal -->
+        <div class="ui tiny modal" id="editProduct{{ $product->id }}Modal">
+            <div class="header">{{ trans('products.modal.header.edit', ['name' => $product->name]) }}</div>
+            <div class="content">
+                <form action="{{ route('products.edit', ['product' => $product->id]) }}" class="ui form" method="POST">
+                    {{ csrf_field() }}
+                    {{ method_field('POST') }} {{-- Laravel uses POST for PUT/PATCH via _method field --}}
+                    @if(Auth::user()->role === 'super')
+                        <div class="field required">
+                            <label>{{ trans('products.input.label.company') }}</label>
+                            <div class="ui selection dropdown">
+                                <input name="company_id" type="hidden" value="{{ $product->company->id }}">
+                                <i class="dropdown icon"></i>
+                                <div class="default text">{{ $product->company->name }}</div>
+                                <div class="menu">
+                                    @foreach($companies as $company)
+                                        <div class="item" data-value="{{ $company->id }}">{{ $company->name }}</div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                    <div class="field required">
+                        <label>{{ trans('products.input.label.name') }}</label>
+                        <input name="name" placeholder="{{ trans('products.input.placeholder.name') }}" type="text" value="{{ $product->name }}">
+                    </div>
+                    <div class="field required">
+                        <label>{{ trans('products.input.label.insurer') }}</label>
+                        <input name="insurer" placeholder="{{ trans('products.input.placeholder.insurer') }}" type="text" value="{{ $product->insurer }}">
+                    </div>
+                    <div class="field required">
+                        <label>{{ trans('products.input.label.category') }}</label>
+                        <div class="ui selection dropdown">
+                            <input name="category" type="hidden" value="{{ $product->category }}">
+                            <i class="dropdown icon"></i>
+                            <div class="default text">{{ $product->category }}</div>
+                            <div class="menu">
+                                @if(Auth::user()->role === 'super')
+                                    @foreach($companies as $company)
+                                        @foreach($company->product_categories as $category)
+                                            <div class="item" data-value="{{ $category }}">{{ $category }}</div>
+                                        @endforeach
+                                    @endforeach
+                                @else
+                                    @foreach($company->product_categories as $category)
+                                        <div class="item" data-value="{{ $category }}">{{ $category }}</div>
+                                    @endforeach
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field required">
+                        <label>{{ trans('products.input.label.sub_category') }}</label>
+                        <div class="ui selection dropdown">
+                            <input name="sub_category" type="hidden" value="{{ $product->sub_category }}">
+                            <i class="dropdown icon"></i>
+                            <div class="default text">{{ $product->sub_category }}</div>
+                            <div class="menu">
+                                @if(Auth::user()->role === 'super')
+                                    @foreach($companies as $company)
+                                        @foreach($company->product_sub_categories as $sub_category)
+                                            <div class="item" data-value="{{ $sub_category }}">{{ $sub_category }}</div>
+                                        @endforeach
+                                    @endforeach
+                                @else
+                                    @foreach($company->product_sub_categories as $sub_category)
+                                        <div class="item" data-value="{{ $sub_category }}">{{ $sub_category }}</div>
+                                    @endforeach
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="actions">
+                <div class="ui buttons">
+                    <button class="ui cancel button">{{ trans('products.modal.button.cancel.edit') }}</button>
+                    <div class="or" data-text="{{ trans('products.modal.button.or') }}"></div>
+                    <button class="ui positive primary button">{{ trans('products.modal.button.confirm.edit') }}</button>
+                </div>
+            </div>
+        </div>
+        <!-- end edit product modal -->
+    @endforeach
+@endsection

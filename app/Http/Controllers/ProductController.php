@@ -111,6 +111,6 @@ class ProductController extends Controller {
         $view_data['presenter'] = new SemanticUIPresenter($view_data['products']);
         
         
-        return view($user->role . '.products', $view_data);
+        return view('templates.products', $view_data);
     }
 }

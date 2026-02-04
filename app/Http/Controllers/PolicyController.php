@@ -326,6 +326,7 @@ class PolicyController extends Controller {
                     ->insuraFilter($filters)
                     ->paginate(15);
                 $view_data['clients'] = $user->invitees()->get();
+                $view_data['branches'] = Branches::all();
                 //$view_data['clients'] = DB::table('users')->where('role','=','client')->get();
                 break;
             case 'client':
@@ -335,6 +336,8 @@ class PolicyController extends Controller {
                     ->withSum('payments', 'amount') // Calculate sum in database
                     ->insuraFilter($filters)
                     ->paginate(15);
+                $view_data['branches'] = Branches::all();
+                $view_data['clients'] = collect([$user]);
                 break;
         }
         $view_data['policies']->currency_symbol = $currencies_by_code->get($user->company->currency_code)['symbol'];
@@ -362,7 +365,7 @@ class PolicyController extends Controller {
         $view_data['presenter'] = new SemanticUIPresenter($view_data['policies']);
         $view_data['filters'] = $filters;
 
-        return view($user->role . '.policies.all', $view_data);
+        return view('templates.policies.all', $view_data);
     }
 
     /**
@@ -394,6 +397,9 @@ class PolicyController extends Controller {
      * @return \Illuminate\Http\Response
      */
     public function getOne(Request $request, Policy $policy) {
+        if (!$policy->client || !$policy->product) {
+            abort(404);
+        }
         $user = $request->user();
         // Eager load relationships to avoid N+1 queries
         $policy->load(['client.company', 'product', 'branch']);
@@ -417,27 +423,21 @@ class PolicyController extends Controller {
         $view_data = array(
             'policy' => $policy
         );
+        $view_data['branches']      = Branches::all();
+        $view_data['staffs']        = User::where('role','=','staff')->where('staff_role','=','S')->get();
+        $view_data['branch_manger'] = User::where('staff_role','=','BM')->get();
+        $view_data['branch_assist'] = User::where('staff_role','=','BA')->get();
         if($user->role === 'super') {
-            $view_data['companies']     = Product::all();
-            $view_data['branches']      = Branches::all();
-            $view_data['staffs']        = User::where('role','=','staff')->where('staff_role','=','S')->get();
-            $view_data['branch_manger'] = User::where('staff_role','=','BM')->get();
-            $view_data['branch_assist'] = User::where('staff_role','=','BA')->get();
             $view_data['clients']  = $user->company->clients()->get();
         }
         if($user->role === 'staff') {
-
-            $view_data['branches']      = Branches::where('id','=',$request->user()->branch_id)->get();
-            $view_data['staffs'] = User::where('role','=','staff')->where('branch_id','=',$request->user()->branch_id)->get();
-            $view_data['branch_manger'] = User::where('staff_role','=','BM')->where('branch_id','=',$request->user()->branch_id)->get();
-            $view_data['branch_assist'] = User::where('staff_role','=','BA')->where('branch_id','=',$request->user()->branch_id)->get();
             $view_data['clients']  = $user->company->clients()->where('branch_id','=',$request->user()->branch_id)->get();
         }
 
 
 
 
-        return view($user->role . '.policies.one', $view_data);
+        return view('templates.policies.one', $view_data);
     }
 
 }
